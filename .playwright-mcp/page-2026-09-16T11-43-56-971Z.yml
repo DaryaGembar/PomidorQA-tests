@@ -1,0 +1,64 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - banner [ref=f3e3]:
+      - generic [ref=f3e4]:
+        - link "← AIQA" [ref=f3e5] [cursor=pointer]:
+          - /url: /
+        - link "🍅 PomidorQA" [ref=f3e6] [cursor=pointer]:
+          - /url: /pomidorqa
+          - generic [ref=f3e7]: 🍅
+          - text: PomidorQA
+        - navigation [ref=f3e42]:
+          - link "Мои слоты" [ref=f3e43] [cursor=pointer]:
+            - /url: /pomidorqa/profile/slots
+          - link "Мои встречи" [ref=f3e44] [cursor=pointer]:
+            - /url: /pomidorqa/bookings
+          - link "Профиль" [ref=f3e45] [cursor=pointer]:
+            - /url: /pomidorqa/profile
+        - button "Выйти" [ref=f3e47]
+    - main [ref=f3e10]:
+      - generic [ref=f3e48]:
+        - generic [ref=f3e50]:
+          - generic [ref=f3e51]: 🍅 25 минут — как в помодоро, но с человеком
+          - heading "Коротко созвонись с коллегой из QA-сообщества" [level=1] [ref=f3e52]
+          - paragraph [ref=f3e53]: Укажи, в чем разбираешься и чему хочешь научиться, выбери свободный слот — мы сведём тебя с подходящим человеком. Без долгих встреч — только 25 минут по делу.
+          - link "Заполнить свой профиль" [ref=f3e55] [cursor=pointer]:
+            - /url: /pomidorqa/profile
+        - generic [ref=f3e56]:
+          - generic [ref=f3e57]:
+            - heading "Найти собеседника" [level=2] [ref=f3e58]
+            - paragraph [ref=f3e59]: Показаны только те, у кого есть свободные слоты прямо сейчас.
+          - generic [ref=f3e60]:
+            - generic [ref=f3e61]:
+              - generic [ref=f3e62]: Навык
+              - textbox "Навык" [ref=f3e63]:
+                - /placeholder: Playwright, SQL, собеседования...
+            - button "Найти" [ref=f3e64]
+          - generic [ref=f3e65]:
+            - link "EEE 1 своб. слотов цйцу" [ref=f3e66] [cursor=pointer]:
+              - /url: /pomidorqa/people/07eb2587-eb51-4f45-8c6a-88c7760824f0
+              - generic [ref=f3e67]:
+                - generic [ref=f3e68]: EEE
+                - generic [ref=f3e69]: 1 своб. слотов
+              - generic [ref=f3e70]: цйцу
+            - link "123 1 своб. слотов 545435" [ref=f3e72] [cursor=pointer]:
+              - /url: /pomidorqa/people/0d58511f-2c34-4d0f-a73a-9ff92d5f942f
+              - generic [ref=f3e73]:
+                - generic [ref=f3e74]: "123"
+                - generic [ref=f3e75]: 1 своб. слотов
+              - generic [ref=f3e76]: "545435"
+            - link "вал 1 своб. слотов" [ref=f3e78] [cursor=pointer]:
+              - /url: /pomidorqa/people/9841004a-d43f-4eed-9c79-f4f1d64ce291
+              - generic [ref=f3e79]:
+                - generic [ref=f3e80]: вал
+                - generic [ref=f3e81]: 1 своб. слотов
+            - link "Мирзиёд 1 своб. слотов Начинающий QA тест" [ref=f3e82] [cursor=pointer]:
+              - /url: /pomidorqa/people/badf75c6-13fb-4b42-8939-bbdc8b2309b7
+              - generic [ref=f3e83]:
+                - generic [ref=f3e84]: Мирзиёд
+                - generic [ref=f3e85]: 1 своб. слотов
+              - paragraph [ref=f3e86]: Начинающий QA
+              - generic [ref=f3e87]: тест
+    - contentinfo [ref=f3e29]: PomidorQA · сервис для QA-сообщества внутри AIQA · 25 минут решают больше, чем кажется
+  - button "Сообщить о баге или идее" [ref=f3e31]
+  - alert [ref=f3e41]

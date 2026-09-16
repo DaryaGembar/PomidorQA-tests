@@ -1,0 +1,37 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - banner [ref=f3e3]:
+      - generic [ref=f3e4]:
+        - link "← AIQA" [ref=f3e5] [cursor=pointer]:
+          - /url: /
+        - link "🍅 PomidorQA" [ref=f3e6] [cursor=pointer]:
+          - /url: /pomidorqa
+          - generic [ref=f3e7]: 🍅
+          - text: PomidorQA
+        - navigation
+        - link "Войти" [ref=f3e9] [cursor=pointer]:
+          - /url: /pomidorqa/auth/login
+    - main [ref=f3e10]:
+      - generic [ref=f3e11]:
+        - generic [ref=f3e12]:
+          - heading "Регистрация в PomidorQA" [level=1] [ref=f3e13]
+          - paragraph [ref=f3e14]: Отдельный аккаунт от AIQA — специально для этого сервиса.
+        - generic [ref=f3e15]:
+          - generic [ref=f3e16]:
+            - generic [ref=f3e17]: Имя
+            - textbox "Имя" [ref=f3e18]
+          - generic [ref=f3e19]:
+            - generic [ref=f3e20]: Email
+            - textbox "Email" [ref=f3e21]
+          - generic [ref=f3e22]:
+            - generic [ref=f3e23]: Пароль
+            - textbox "Пароль Не короче 8 символов" [ref=f3e24]
+            - generic [ref=f3e25]: Не короче 8 символов
+          - button "Зарегистрироваться" [ref=f3e26]
+        - paragraph [ref=f3e27]:
+          - text: Уже есть аккаунт?
+          - link "Войти" [ref=f3e28] [cursor=pointer]:
+            - /url: /pomidorqa/auth/login
+    - contentinfo [ref=f3e29]: PomidorQA · сервис для QA-сообщества внутри AIQA · 25 минут решают больше, чем кажется
+  - button "Сообщить о баге или идее" [ref=f3e31]
+  - alert [ref=f3e41]
