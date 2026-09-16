@@ -8,7 +8,14 @@ export default defineConfig({
   // Один CI-worker снижает конкуренцию за пользователей, слоты и бронирования на общем стенде.
   workers: process.env.CI ? 1 : undefined,
   // В CI пишем лог и HTML-artifact, но не пытаемся открыть браузерное окно на headless-runner.
-  reporter: [["list"], ["html", { open: process.env.CI ? "never" : "on-failure" }]],
+  // `junit` нужен dorny/test-reporter для таблицы в PR-комментарии и GitHub Actions Summary.
+  // `allure-playwright` собирает историю, severity и attachments — Allure-отчёт можно открывать локально и в CI.
+  reporter: [
+    ["list"],
+    ["html", { open: process.env.CI ? "never" : "on-failure" }],
+    ["junit", { outputFile: "results.xml" }],
+    ["allure-playwright", { outputFolder: "allure-results" }],
+  ],
   projects: [
     {
       name: "unit",

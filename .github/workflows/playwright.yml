@@ -66,6 +66,22 @@ jobs:
           # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
           CI: true
 
+      # Публикуем таблицу результатов в PR-комментарий и Summary.
+      # Использует `results.xml`, который сгенерировал junit-репортер из playwright.config.ts.
+      - name: Publish test report to PR
+        # Шаг нужен и при падении, и при отмене — пропускаем только отменённый run целиком.
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v1
+        with:
+          # Заголовок таблицы в комментарии PR.
+          name: Playwright Report
+          # Путь к junit-XML из playwright.config.ts.
+          path: results.xml
+          # Playwright пишет junit в формате, совместимом с jest-junit.
+          reporter: jest-junit
+          # Не валим шаг из-за красных тестов: job уже упал выше, дублировать не нужно.
+          fail-on-error: false
+
       # Сохраняем HTML-отчёт после завершения тестов.
       - name: Upload Playwright report
         # Загружаем отчёт и после успеха, и после падения; пропускаем только отменённый run.
@@ -76,7 +92,10 @@ jobs:
         with:
           # Уникальный run_id не даёт отчётам разных запусков конфликтовать по имени.
           name: playwright-report-${{ github.run_id }}
-          # Стандартный каталог, куда HTML reporter Playwright пишет отчёт.
-          path: playwright-report/
+          # Складываем HTML-отчёт, junit-XML и сырые данные для Allure.
+          path: |
+            playwright-report/
+            allure-results/
+            results.xml
           # Двух недель достаточно для разбора PR, старые учебные отчёты не храним бессрочно.
           retention-days: 14
