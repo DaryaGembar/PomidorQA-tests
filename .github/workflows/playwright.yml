@@ -66,12 +66,69 @@ jobs:
           # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
           CI: true
 
+      # Отправляем итог прогона в Telegram: и при успехе, и при падении тестов.
+      # Шаг стоит сразу после прогона, чтобы уведомление ушло даже при падении dorny или upload-artifact.
+      # Перед этим нужно добавить секреты TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID в Settings → Secrets → Actions.
+      - name: Notify Telegram
+        # `always()` — выполняем и при успехе, и при падении, и при ошибке любого предыдущего шага.
+        if: ${{ always() }}
+        env:
+          # Токен бота и chat_id лежат в секретах workflow, чтобы не светиться в логах.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Метаданные GitHub для текста сообщения.
+          STATUS: ${{ job.status }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+          COMMITTER: ${{ github.actor }}
+          # URL для превью коммита в сообщении.
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          # Считаем totals из junit-XML, который сгенерировал репортер `junit` в playwright.config.ts.
+          # Если файла нет (например, упал npm test до старта тестов) — пишем нули, чтобы сообщение всё равно ушло.
+          if [ -f results.xml ]; then
+            PASSED=$(grep -oE 'tests="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
+            FAILURES=$(grep -oE 'failures="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
+            SKIPPED=$(grep -oE 'skipped="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
+          else
+            PASSED=0; FAILURES=0; SKIPPED=0
+          fi
+          TOTAL=$((PASSED + FAILURES + SKIPPED))
+
+          # Эмодзи и заголовок зависят от job.status — GitHub уже знает итог прогона.
+          if [ "$STATUS" = "success" ]; then
+            EMOJI="✅"; HEAD="Тесты прошли"
+          else
+            EMOJI="❌"; HEAD="Тесты упали"
+          fi
+
+          # Ссылка на коммит и сам прогон.
+          COMMIT_URL="https://github.com/${REPO}/commit/${COMMIT_SHA}"
+          RUN_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
+
+          # Собираем сообщение. Используем обычный Markdown — он прощает спецсимволы без экранирования.
+          TEXT="${EMOJI} *${HEAD}*
+          📦 Репозиторий: ${REPO}
+          🌿 Ветка: ${BRANCH}
+          👤 Запустил: ${COMMITTER}
+          📊 Всего: ${TOTAL} | ✅ ${PASSED} | ❌ ${FAILURES} | ⏭ ${SKIPPED}
+          🔗 [Прогон в GitHub](${RUN_URL})
+          💬 [Коммит](${COMMIT_URL})"
+
+          # Отправляем. --fail нужен, чтобы CI заметил проблему с самим запросом к Telegram.
+          curl --fail -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="Markdown" \
+            -d text="${TEXT}"
+
       # Публикуем таблицу результатов в PR-комментарий и Summary.
       # Использует `results.xml`, который сгенерировал junit-репортер из playwright.config.ts.
       - name: Publish test report to PR
         # Шаг нужен и при падении, и при отмене — пропускаем только отменённый run целиком.
         if: ${{ !cancelled() }}
-        uses: dorny/test-reporter@v1
+        # v3 собран под Node 24: снимает предупреждение «Node.js 20 is deprecated».
+        uses: dorny/test-reporter@v3
         with:
           # Заголовок таблицы в комментарии PR.
           name: Playwright Report
