@@ -41,9 +41,6 @@ export class RegisterPage {
     await this.btnSubmit.click();
   }
 
-  // Форма валидируется нативными HTML5-механизмами (required, type=email, minlength),
-  // ошибки видны в нативных тултипах — единственный стабильный способ проверить их
-  // через a11y — состояние ValidityState конкретного поля.
   async getValidity(input: Locator): Promise<FieldValidity> {
     return input.evaluate((el: HTMLInputElement) => ({
       valueMissing: el.validity.valueMissing,
