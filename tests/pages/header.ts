@@ -1,7 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-// Шапка одна и та же на всех страницах PomidorQA — поэтому отдельный page object.
-// Локаторы скоупятся на banner, чтобы не пересекаться с похожими ссылками в контенте страницы.
 export class SiteHeader {
   readonly page: Page;
   readonly linkProfile: Locator;

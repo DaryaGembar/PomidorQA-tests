@@ -26,6 +26,12 @@ jobs:
 
     # Шаги выполняются сверху вниз в одной и той же машине.
     steps:
+      # Метка старта — из неё Telegram-шаг считает длительность прогона.
+      # Ставим первым шагом, чтобы в замер попали checkout, установка и сами тесты.
+      - name: Note run start time
+        id: run-start
+        run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       # Сначала загружаем в runner код из текущего PR.
       - name: Checkout repository
         # Официальный action GitHub для клонирования репозитория.
@@ -84,17 +90,44 @@ jobs:
           COMMITTER: ${{ github.actor }}
           # URL для превью коммита в сообщении.
           COMMIT_SHA: ${{ github.sha }}
+          # Метка старта прогона из первого шага — для подсчёта длительности.
+          RUN_START_TS: ${{ steps.run-start.outputs.ts }}
         run: |
           # Считаем totals из junit-XML, который сгенерировал репортер `junit` в playwright.config.ts.
           # Если файла нет (например, упал npm test до старта тестов) — пишем нули, чтобы сообщение всё равно ушло.
           if [ -f results.xml ]; then
-            PASSED=$(grep -oE 'tests="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
+            TOTAL=$(grep -oE 'tests="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
             FAILURES=$(grep -oE 'failures="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
             SKIPPED=$(grep -oE 'skipped="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
+            # Корневой `tests="..."` — все тесты; реально прошедшие = все минус упавшие и пропущенные.
+            PASSED=$((TOTAL - FAILURES - SKIPPED))
+
+            # Разбивка по типам тестов: junit-репортер Playwright помечает каждый `<testsuite>`
+            # атрибутом `hostname="<имя проекта>"` из playwright.config.ts (unit / api / e2e).
+            count_tests() {
+              awk -v proj="$1" '
+                /<testsuite / {
+                  host = ""; tests = 0
+                  if (match($0, /hostname="[^"]+"/)) host = substr($0, RSTART + 10, RLENGTH - 11)
+                  if (match($0, / tests="[0-9]+"/)) tests = substr($0, RSTART + 8, RLENGTH - 9) + 0
+                  if (host == proj) total += tests
+                }
+                END { print total + 0 }
+              ' results.xml
+            }
+            UNIT_TESTS=$(count_tests unit)
+            API_TESTS=$(count_tests api)
+            E2E_TESTS=$(count_tests e2e)
           else
-            PASSED=0; FAILURES=0; SKIPPED=0
+            TOTAL=0; FAILURES=0; SKIPPED=0; PASSED=0
+            UNIT_TESTS=0; API_TESTS=0; E2E_TESTS=0
           fi
-          TOTAL=$((PASSED + FAILURES + SKIPPED))
+
+          # Длительность прогона — от метки первого шага до отправки уведомления.
+          RUN_START_TS=${RUN_START_TS:-$(date +%s)}
+          ELAPSED=$(( $(date +%s) - RUN_START_TS ))
+          if (( ELAPSED < 0 )); then ELAPSED=0; fi
+          DURATION_FMT="$((ELAPSED / 60)) мин $((ELAPSED % 60)) с"
 
           # Эмодзи и заголовок зависят от job.status — GitHub уже знает итог прогона.
           if [ "$STATUS" = "success" ]; then
@@ -112,7 +145,9 @@ jobs:
           📦 Репозиторий: ${REPO}
           🌿 Ветка: ${BRANCH}
           👤 Запустил: ${COMMITTER}
+          ⏱ Время прогона: ${DURATION_FMT}
           📊 Всего: ${TOTAL} | ✅ ${PASSED} | ❌ ${FAILURES} | ⏭ ${SKIPPED}
+          🧪 Unit: ${UNIT_TESTS} | API: ${API_TESTS} | E2E: ${E2E_TESTS}
           🔗 [Прогон в GitHub](${RUN_URL})
           💬 [Коммит](${COMMIT_URL})"
 

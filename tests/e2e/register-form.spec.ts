@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  makeUser,
-  registerViaApi,
-  deleteAccountViaApi,
-  type TestUser,
-} from '../helpers/user';
+import { makeUser, registerViaApi, deleteAccountViaApi, type TestUser } from '../helpers/user';
 import { RegisterPage } from '../pages/auth';
 import { SiteHeader } from '../pages/header';
 
@@ -21,7 +16,6 @@ test.describe('Форма регистрации', () => {
   });
 
   test.afterEach(async ({ page }) => {
-    // Аккаунт создаётся не в каждом тесте: DELETE без регистрации завершится ошибкой — это норма.
     await deleteAccountViaApi(page.context()).catch(() => undefined);
   });
 
