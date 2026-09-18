@@ -35,7 +35,6 @@ export default defineConfig({
         baseURL: process.env.POMIDORQA_BASE_URL ?? "https://aiqa.su",
         trace: "retain-on-failure",
         screenshot: "only-on-failure",
-        video: "retain-on-failure",
       },
     },
   ],

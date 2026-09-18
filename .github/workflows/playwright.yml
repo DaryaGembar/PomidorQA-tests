@@ -184,10 +184,13 @@ jobs:
         with:
           # Уникальный run_id не даёт отчётам разных запусков конфликтовать по имени.
           name: playwright-report-${{ github.run_id }}
-          # Складываем HTML-отчёт, junit-XML и сырые данные для Allure.
+          # Складываем HTML-отчёт, junit-XML, сырые данные для Allure и артефакты
+          # упавших e2e-тестов (trace, скриншоты) из `test-results/`.
+          # Без этой строки трейсы падений живут только на раннере и умирают с ним.
           path: |
             playwright-report/
             allure-results/
             results.xml
+            test-results/
           # Двух недель достаточно для разбора PR, старые учебные отчёты не храним бессрочно.
           retention-days: 14

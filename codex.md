@@ -13,7 +13,7 @@
 | `tests/api/`            | API-тесты: HTTP к локальному мок-серверу                                                                                                      |
 | `tests/unit/`           | Юнит-тесты чистых функций                                                                                                                     |
 | `src/pyramid/`          | Логика предметной области и мок-API (`slots.ts`, `mock-booking-api.ts`)                                                                       |
-| `playwright.config.ts`  | Проекты `unit`, `api`, `e2e`; env `POMIDORQA_BASE_URL`; trace/screenshot/video пишутся только при падении                                     |
+| `playwright.config.ts`  | Проекты `unit`, `api`, `e2e`; env `POMIDORQA_BASE_URL`; trace и скриншоты пишутся только при падении                                          |
 | `eslint.config.mjs`     | Flat config: typescript-eslint + eslint-plugin-playwright                                                                                     |
 
 ## Команды
@@ -28,7 +28,7 @@ npx eslint tests/pages/catalog.ts --fix            # линт конкретны
 npm run report                                     # HTML-отчёт последнего прогона
 ```
 
-Артефакты падений (trace, скриншоты, видео) лежат в `test-results/` — читать их при разборе падения.
+Артефакты падений (trace, скриншоты) лежат в `test-results/` — читать их при разборе падения; в CI каталог `test-results/` грузится в artifact прогона.
 
 ## Конвенции
 

@@ -8,6 +8,12 @@ import { SlotsPage } from '../pages/slots';
 test('основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', async ({
   browser,
 }) => {
+  // Самый длинный journey-тест репо: 3 регистрации, 2 каталога, гонка за слот
+  // и два toPass-поллинга в конце. Глобальные 30 с из playwright.config.ts
+  // не вмещают такой путь на CI (1 worker, медленный раннер), поэтому тест
+  // объявляет себя медленным: test.slow() утраивает бюджет до 90 с.
+  test.slow();
+
   const skillTag = makeUnique('Playwright-demo');
   const host = makeUser('host');
   const guest = makeUser('guest');
