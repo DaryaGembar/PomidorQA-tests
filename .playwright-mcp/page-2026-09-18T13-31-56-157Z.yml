@@ -1,0 +1,33 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "← AIQA" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - link "🍅 PomidorQA" [ref=e6] [cursor=pointer]:
+          - /url: /pomidorqa
+          - generic [ref=e7]: 🍅
+          - text: PomidorQA
+        - navigation
+        - link "Войти" [ref=e9] [cursor=pointer]:
+          - /url: /pomidorqa/auth/login
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - heading "Вход в PomidorQA" [level=1] [ref=e13]
+          - paragraph [ref=e14]: Отдельный аккаунт от AIQA — специально для этого сервиса.
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - generic [ref=e17]: Email
+            - textbox "Email" [ref=e18]
+          - generic [ref=e19]:
+            - generic [ref=e20]: Пароль
+            - textbox "Пароль" [ref=e21]
+          - button "Войти" [ref=e22]
+        - paragraph [ref=e23]:
+          - text: Нет аккаунта?
+          - link "Зарегистрироваться" [ref=e24] [cursor=pointer]:
+            - /url: /pomidorqa/auth/register
+    - contentinfo [ref=e25]: PomidorQA · сервис для QA-сообщества внутри AIQA · 25 минут решают больше, чем кажется
+  - button "Сообщить о баге или идее" [ref=e27]
+  - alert [ref=e37]

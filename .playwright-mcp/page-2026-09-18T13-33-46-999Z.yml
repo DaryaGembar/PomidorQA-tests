@@ -1,0 +1,66 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "← AIQA" [ref=f2e5] [cursor=pointer]:
+          - /url: /
+        - link "🍅 PomidorQA" [ref=f2e6] [cursor=pointer]:
+          - /url: /pomidorqa
+          - generic [ref=f2e7]: 🍅
+          - text: PomidorQA
+        - navigation [ref=f2e8]:
+          - link "Мои слоты" [ref=f2e9] [cursor=pointer]:
+            - /url: /pomidorqa/profile/slots
+          - link "Мои встречи" [ref=f2e10] [cursor=pointer]:
+            - /url: /pomidorqa/bookings
+          - link "Профиль" [ref=f2e11] [cursor=pointer]:
+            - /url: /pomidorqa/profile
+        - button "Выйти" [ref=f2e14]
+    - main [ref=f2e15]:
+      - generic [ref=f2e58]:
+        - generic [ref=f2e59]:
+          - heading "Твой профиль" [level=1] [ref=f2e60]
+          - paragraph [ref=f2e61]: Эти данные видны другим участникам в каталоге — заполни честно, это влияет на подбор.
+        - generic [ref=f2e62]:
+          - generic [ref=f2e63]:
+            - generic [ref=f2e64]: Имя
+            - textbox "Имя" [ref=f2e65]: Research Автотест 2
+          - generic [ref=f2e66]:
+            - generic [ref=f2e67]: Telegram
+            - textbox "Telegram" [ref=f2e68]:
+              - /placeholder: "@username"
+          - generic [ref=f2e69]:
+            - generic [ref=f2e70]: Часовой пояс
+            - combobox "Часовой пояс" [ref=f2e71]:
+              - option "Europe/Kaliningrad"
+              - option "Europe/Moscow" [selected]
+              - option "Europe/Samara"
+              - option "Asia/Yekaterinburg"
+              - option "Asia/Omsk"
+              - option "Asia/Novosibirsk"
+              - option "Asia/Krasnoyarsk"
+              - option "Asia/Irkutsk"
+              - option "Asia/Yakutsk"
+              - option "Asia/Vladivostok"
+          - generic [ref=f2e72]:
+            - generic [ref=f2e73]: О себе
+            - textbox "О себе" [ref=f2e74]:
+              - /placeholder: Пара слов о том, чем занимаешься и что интересно обсудить
+          - button "Сохранить" [ref=f2e75]
+        - generic [ref=f2e76]:
+          - heading "Навыки" [level=2] [ref=f2e77]
+          - paragraph [ref=f2e78]: Добавь то, чем можешь помочь, и то, что хочешь разобрать — по этому тебя будут находить в каталоге.
+          - generic [ref=f2e79]:
+            - generic [ref=f2e80]:
+              - generic [ref=f2e81]: Навык
+              - textbox "Навык" [ref=f2e82]:
+                - /placeholder: "Например: Playwright, SQL, собеседования"
+            - generic [ref=f2e83]:
+              - generic [ref=f2e84]: Тип
+              - combobox "Тип" [ref=f2e85]:
+                - option "Могу помочь" [selected]
+                - option "Хочу разобрать"
+            - button "Добавить" [ref=f2e86]
+    - contentinfo [ref=f2e45]: PomidorQA · сервис для QA-сообщества внутри AIQA · 25 минут решают больше, чем кажется
+  - button "Сообщить о баге или идее" [ref=f2e47]
+  - alert [ref=f2e57]
