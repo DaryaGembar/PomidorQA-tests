@@ -8,3 +8,5 @@ results.xml
 .env.local
 *.log
 .DS_Store
+.playwright-mcp/
+.claude/
