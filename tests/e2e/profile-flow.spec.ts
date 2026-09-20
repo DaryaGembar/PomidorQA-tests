@@ -92,4 +92,16 @@ test.describe('Заполнение профиля после регистрац
       await expect(profilePage.canHelpSkills).toContainText(skillTag);
     });
   });
+
+  test('Навык «хочу разобрать»: выбираем второй тип и добавляем', async () => {
+    const skillTag = makeUnique('WantToLearn');
+
+    await test.step('Добавляем навык с типом «хочу разобрать»', async () => {
+      await profilePage.addSkill(skillTag, 'want_to_learn');
+    });
+
+    await test.step('Навык появился в блоке «Хочу разобрать»', async () => {
+      await expect(profilePage.wantToLearnSkills).toContainText(skillTag);
+    });
+  });
 });

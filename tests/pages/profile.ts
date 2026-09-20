@@ -11,6 +11,7 @@ export class ProfilePage {
   readonly selectSkillType: Locator;
   readonly btnAddSkill: Locator;
   readonly canHelpSkills: Locator;
+  readonly wantToLearnSkills: Locator;
   readonly btnSave: Locator;
 
   constructor(page: Page) {
@@ -23,6 +24,7 @@ export class ProfilePage {
     this.selectSkillType = page.locator('#pomidorqa-profile-skill-type');
     this.btnAddSkill = page.getByRole('button', { name: 'Добавить' });
     this.canHelpSkills = page.getByTestId('can-help-skills');
+    this.wantToLearnSkills = page.locator('div:has(> p:text-is("Хочу разобрать"))');
     this.btnSave = page.getByRole('button', { name: 'Сохранить' });
   }
 
