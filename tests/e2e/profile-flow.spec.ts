@@ -8,6 +8,19 @@ import {
 } from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 
+const RF_TIMEZONES = [
+  'Europe/Kaliningrad',
+  'Europe/Moscow',
+  'Europe/Samara',
+  'Asia/Yekaterinburg',
+  'Asia/Omsk',
+  'Asia/Novosibirsk',
+  'Asia/Krasnoyarsk',
+  'Asia/Irkutsk',
+  'Asia/Yakutsk',
+  'Asia/Vladivostok',
+] as const;
+
 test.describe('Заполнение профиля после регистрации', () => {
   let user: TestUser;
   let profilePage: ProfilePage;
@@ -19,9 +32,11 @@ test.describe('Заполнение профиля после регистрац
     await profilePage.open();
     await expect(profilePage.inputName).toHaveValue(user.name);
   });
+
   test.afterEach(async ({ page }) => {
     await deleteAccountViaApi(page.context()).catch(() => undefined);
   });
+
   test('Смена имени в профиле', async ({ page }) => {
     const newName = makeUnique('Hw10');
 
@@ -37,19 +52,28 @@ test.describe('Заполнение профиля после регистрац
     });
   });
 
-  test('Выбор часового пояса из списка', async ({ page }) => {
-    const timezone = 'Asia/Yekaterinburg';
-
-    await test.step('Выбираем часовой пояс и сохраняем', async () => {
+  test('Список часовых поясов соответствует спецификации', async () => {
+    await test.step('По умолчанию выбран Europe/Moscow', async () => {
       await expect(profilePage.timezoneSelect).toHaveValue('Europe/Moscow');
-      await profilePage.timezoneSelect.selectOption(timezone);
-      await profilePage.save();
     });
 
-    await test.step('После перезагрузки выбран новый пояс', async () => {
-      await page.reload();
-      await expect(profilePage.timezoneSelect).toHaveValue(timezone);
+    await test.step('Полный список совпадает с требованиями', async () => {
+      const options = await profilePage.getTimezoneOptions();
+      expect(options).toEqual([...RF_TIMEZONES]);
     });
+  });
+
+  test('Все часовые пояса сохраняются и возвращаются с сервера', async ({ page }) => {
+    const zones = await profilePage.getTimezoneOptions();
+
+    for (const tz of zones) {
+      await test.step(`Пояс ${tz}: сохраняем и проверяем после перезагрузки`, async () => {
+        await profilePage.timezoneSelect.selectOption(tz);
+        await profilePage.save();
+        await page.reload();
+        await expect.soft(profilePage.timezoneSelect).toHaveValue(tz);
+      });
+    }
   });
 
   test('Заполнение поля Telegram', async ({ page }) => {

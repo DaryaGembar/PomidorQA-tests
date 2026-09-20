@@ -44,7 +44,11 @@ export class ProfilePage {
     await this.btnSave.click();
     await saveResponse;
   }
-
+  async getTimezoneOptions(): Promise<string[]> {
+    return this.timezoneSelect
+      .locator('option')
+      .evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value));
+  }
   async addSkill(tag: string, type: 'can_help' | 'want_to_learn' = 'can_help') {
     await this.inputSkill.fill(tag);
     await this.selectSkillType.selectOption(type);
