@@ -36,7 +36,7 @@ test('основной путь + гонка за слот: регистраци
       await registerViaApi(hostContext, host);
     });
 
-    await test.step('Хост: выбирает «хочу разобрать» в профиле', async () => {
+    await test.step('Хост: выбирает «Могу помочь» в профиле', async () => {
       await hostProfile.open();
       await hostProfile.addSkill(skillTag);
     });
