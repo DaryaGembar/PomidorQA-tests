@@ -8,7 +8,6 @@ import { SlotsPage } from '../pages/slots';
 test('основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', async ({
   browser,
 }) => {
-
   test.slow();
 
   const skillTag = makeUnique('Playwright-demo');
@@ -37,7 +36,7 @@ test('основной путь + гонка за слот: регистраци
       await registerViaApi(hostContext, host);
     });
 
-    await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
+    await test.step('Хост: выбирает «хочу разобрать» в профиле', async () => {
       await hostProfile.open();
       await hostProfile.addSkill(skillTag);
     });
