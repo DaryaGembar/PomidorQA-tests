@@ -1,7 +1,10 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, type Response } from '@playwright/test';
 import { ROUTES } from '../helpers/user';
 
 export class ProfilePage {
+  private readonly appAction = (resp: Response) =>
+    resp.url().includes('/pomidorqa') && resp.request().method() !== 'GET';
+
   readonly page: Page;
   readonly inputName: Locator;
   readonly inputTelegram: Locator;
@@ -38,20 +41,35 @@ export class ProfilePage {
   }
 
   async save() {
-    const saveResponse = this.page.waitForResponse(
-      (resp) => resp.url().includes('/pomidorqa') && resp.request().method() !== 'GET',
-    );
-    await this.btnSave.click();
-    await saveResponse;
+    await expect(async () => {
+      const saveResponse = this.page.waitForResponse(this.appAction, { timeout: 5_000 });
+      await this.btnSave.click();
+      await saveResponse;
+    }).toPass({ timeout: 15_000 });
   }
+
   async getTimezoneOptions(): Promise<string[]> {
     return this.timezoneSelect
       .locator('option')
       .evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value));
   }
+
   async addSkill(tag: string, type: 'can_help' | 'want_to_learn' = 'can_help') {
+    const addResponse = this.page.waitForResponse(this.appAction);
     await this.inputSkill.fill(tag);
     await this.selectSkillType.selectOption(type);
     await this.btnAddSkill.click();
+    await addResponse;
+  }
+
+  async removeSkill(tag: string, type: 'can_help' | 'want_to_learn' = 'can_help') {
+    const block = type === 'can_help' ? this.canHelpSkills : this.wantToLearnSkills;
+    const btn = block.getByRole('button', { name: `Убрать ${tag}` });
+
+    await expect(async () => {
+      const removeResponse = this.page.waitForResponse(this.appAction, { timeout: 5_000 });
+      await btn.click();
+      await removeResponse;
+    }).toPass({ timeout: 15_000 });
   }
 }

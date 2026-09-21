@@ -105,7 +105,7 @@ test.describe('Заполнение профиля после регистрац
     });
   });
 
-  test('Навык: заполняем, выбираем, добавляем', async () => {
+  test('Навык: заполняем, выбираем, добавляем', async ({ page }) => {
     const skillTag = `Playwright-demo-${Date.now()}`;
 
     await test.step('Добавляем навык «могу помочь»', async () => {
@@ -115,9 +115,26 @@ test.describe('Заполнение профиля после регистрац
     await test.step('Навык появился в блоке «Могу помочь»', async () => {
       await expect(profilePage.canHelpSkills).toContainText(skillTag);
     });
+
+    await test.step('Добавляем тот же навык повторно', async () => {
+      await profilePage.addSkill(skillTag);
+    });
+
+    await test.step('Дубликат не появился в блоке «Могу помочь»', async () => {
+      await expect(
+        profilePage.canHelpSkills.locator('form').filter({ hasText: skillTag }),
+      ).toHaveCount(1);
+    });
+
+    await test.step('После перезагрузки дубликат тоже не появился', async () => {
+      await page.reload();
+      await expect(
+        profilePage.canHelpSkills.locator('form').filter({ hasText: skillTag }),
+      ).toHaveCount(1);
+    });
   });
 
-  test('Навык «хочу разобрать»: выбираем второй тип и добавляем', async () => {
+  test('Навык «хочу разобрать»: выбираем второй тип и добавляем', async ({ page }) => {
     const skillTag = makeUnique('WantToLearn');
 
     await test.step('Добавляем навык с типом «хочу разобрать»', async () => {
@@ -126,6 +143,57 @@ test.describe('Заполнение профиля после регистрац
 
     await test.step('Навык появился в блоке «Хочу разобрать»', async () => {
       await expect(profilePage.wantToLearnSkills).toContainText(skillTag);
+    });
+
+    await test.step('Пытаемся добавить тот же навык повторно', async () => {
+      await profilePage.addSkill(skillTag, 'want_to_learn');
+    });
+
+    await test.step('Дубликат не появился — чип по-прежнему один', async () => {
+      await expect(
+        profilePage.wantToLearnSkills.locator('form').filter({ hasText: skillTag }),
+      ).toHaveCount(1);
+    });
+
+    await test.step('После перезагрузки дубликат тоже не появился', async () => {
+      await page.reload();
+      await expect(
+        profilePage.wantToLearnSkills.locator('form').filter({ hasText: skillTag }),
+      ).toHaveCount(1);
+    });
+  });
+
+  test('Удаление навыков «могу помочь», "хочу разобрать"', async ({ page }) => {
+    const skillTag = makeUnique('RemoveSkill');
+
+    await test.step('Добавляем навык «могу помочь»', async () => {
+      await profilePage.addSkill(skillTag);
+    });
+
+    await test.step('Убираем навык', async () => {
+      await profilePage.removeSkill(skillTag);
+    });
+
+    await test.step('После перезагрузки навыка нет в блоке «Могу помочь»', async () => {
+      await page.reload();
+      await expect(
+        profilePage.canHelpSkills.locator('form').filter({ hasText: skillTag }),
+      ).toHaveCount(0);
+    });
+
+    await test.step('Добавляем навык «хочу разобрать»', async () => {
+      await profilePage.addSkill(skillTag, 'want_to_learn');
+    });
+
+    await test.step('Убираем навык', async () => {
+      await profilePage.removeSkill(skillTag, 'want_to_learn');
+    });
+
+    await test.step('После перезагрузки навыка нет в блоке «Хочу разобрать»', async () => {
+      await page.reload();
+      await expect(
+        profilePage.wantToLearnSkills.locator('form').filter({ hasText: skillTag }),
+      ).toHaveCount(0);
     });
   });
 });
