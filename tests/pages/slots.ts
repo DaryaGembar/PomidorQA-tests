@@ -1,4 +1,4 @@
-import { type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { ROUTES } from '../helpers/user';
 
 export class SlotsPage {
@@ -28,5 +28,17 @@ export class SlotsPage {
 
   slotRow(status: 'free' | 'booked'): Locator {
     return this.page.locator(`[data-slot-status="${status}"]`);
+  }
+
+  async deleteFirstFreeSlot() {
+    const btn = this.freeSlots.first().getByRole('button', { name: 'Удалить' });
+    await expect(async () => {
+      const removeResponse = this.page.waitForResponse(
+        (resp) => resp.url().includes('/pomidorqa') && resp.request().method() !== 'GET',
+        { timeout: 5_000 },
+      );
+      await btn.click();
+      await removeResponse;
+    }).toPass({ timeout: 15_000 });
   }
 }
