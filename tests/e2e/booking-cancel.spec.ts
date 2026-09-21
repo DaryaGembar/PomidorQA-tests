@@ -63,6 +63,68 @@ test.describe('Мои встречи: отмена брони', () => {
     await hostContext.close();
   });
 
+  test('Забронированный слот удалить нельзя', async ({ page }) => {
+    let guestResult: 'success' | 'taken';
+
+    await test.step('Гость: открывает каталог и ищет хоста по навыку (сценарий 9)', async () => {
+      await guestCatalog.goto();
+      await guestCatalog.catalogFilterInput.fill(skillTag);
+      await guestCatalog.btnSearch.click();
+    });
+
+    await test.step('Карточка хоста найдена в каталоге', async () => {
+      await expect(guestCatalog.getPersonCard(host.name)).toBeVisible();
+    });
+
+    await test.step('Гость: открывает карточку хоста', async () => {
+      await guestCatalog.getPersonCard(host.name).click();
+    });
+
+    await test.step('Открыта карточка хоста', async () => {
+      await expect(guestCatalog.personName).toHaveText(host.name);
+    });
+
+    await test.step('Гость кликает по дню и времени слота', async () => {
+      await guestBooking.waitForFreeSlot();
+      await guestBooking.selectFirstSlot();
+    });
+
+    await test.step('Гость: подтверждает бронирование', async () => {
+      guestResult = await guestBooking.confirmBooking();
+    });
+
+    await test.step('Бронирование гостя подтверждено', async () => {
+      expect(guestResult).toBe('success');
+    });
+
+    await test.step('Хост: видит бронирование в разделе «Мои встречи»', async () => {
+      await expect(async () => {
+        await hostBooking.openBookings();
+        await expect(hostBooking.upcomingSession).toContainText(guest.name);
+      }).toPass({ timeout: 15_000 });
+    });
+
+    await test.step('Хост: заходит на страницу «Мои встречи»', async () => {
+      await hostSlots.open();
+    });
+
+    await test.step('Слот отображается как забронированный', async () => {
+      await expect(async () => {
+        await hostSlots.open();
+        await expect(hostSlots.slotRow('booked')).toContainText('забронирован');
+      }).toPass({ timeout: 15_000 });
+    });
+
+    await test.step('У забронированного слота нет кнопки удаления', async () => {
+      await expect(hostSlots.slotRow('booked').getByRole('button')).toHaveCount(0);
+    });
+
+    await test.step('После перезагрузки слот всё ещё забронирован', async () => {
+      await page.reload();
+      await expect(hostSlots.slotRow('booked')).toContainText('забронирован');
+    });
+  });
+
   test('отменённая встреча уходит в «Прошедшие и отменённые» — её видят гость и хост после перезагрузки', async () => {
     let guestResult: 'success' | 'taken';
     let cancelResult: 'cancelled' | 'not-found';

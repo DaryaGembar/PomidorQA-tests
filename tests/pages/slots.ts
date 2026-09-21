@@ -25,4 +25,8 @@ export class SlotsPage {
     await this.slotTime.fill(time);
     await this.btnAddSlot.click();
   }
+
+  slotRow(status: 'free' | 'booked'): Locator {
+    return this.page.locator(`[data-slot-status="${status}"]`);
+  }
 }
