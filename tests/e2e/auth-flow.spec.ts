@@ -2,6 +2,7 @@ import { test, expect, type BrowserContext } from '@playwright/test';
 import {
   deleteAccountViaApi,
   loginUser,
+  makeUnique,
   makeUser,
   registerViaApi,
   ROUTES,
@@ -15,7 +16,7 @@ test.describe('Вход и выход', () => {
   let cleanupContext: BrowserContext;
 
   test.beforeEach(async ({ browser, page }) => {
-    user = makeUser('auth');
+    user = makeUser(makeUnique('auth'));
     cleanupContext = await browser.newContext();
     await registerViaApi(cleanupContext, user);
     header = new SiteHeader(page);
