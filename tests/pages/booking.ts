@@ -7,6 +7,7 @@ export class BookingPage {
   readonly calendarTime: Locator;
   readonly confirmModalDialog: Locator;
   readonly modalDialogConfirm: Locator;
+  readonly bookingRequiresAuth: Locator;
   readonly modalSuccess: Locator;
   readonly modalError: Locator;
   readonly upcomingSession: Locator;
@@ -20,6 +21,7 @@ export class BookingPage {
     this.calendarTime = page.getByRole('group', { name: 'Время слотов' }).getByRole('button');
     this.confirmModalDialog = page.getByRole('dialog');
     this.modalDialogConfirm = page.getByRole('button', { name: 'Подтвердить' });
+    this.bookingRequiresAuth = this.confirmModalDialog.getByRole('alert');
     this.modalSuccess = page.getByText('Забронировано');
     this.modalError = page.getByText('Этот слот только что забронировали');
     this.upcomingSession = page.getByTestId('upcoming-meetings');
@@ -35,6 +37,9 @@ export class BookingPage {
     await expect(async () => {
       const dayChip = this.calendarDay.first();
       if (!(await dayChip.isVisible().catch(() => false))) {
+        await this.page
+          .waitForURL(/pomidorqa\/people\//, { timeout: 5_000 })
+          .catch(() => undefined);
         await this.page.reload();
       }
       await expect(dayChip).toBeVisible();
@@ -45,6 +50,13 @@ export class BookingPage {
     await this.modalDialogConfirm.click();
     await expect(this.modalSuccess.or(this.modalError)).toBeVisible({ timeout: 15_000 });
     return (await this.modalError.isVisible().catch(() => false)) ? 'taken' : 'success';
+  }
+
+  async confirmBookingAsGuest() {
+    await this.modalDialogConfirm.click();
+    await expect(this.bookingRequiresAuth).toContainText('Нужно войти в аккаунт PomidorQA', {
+      timeout: 10_000,
+    });
   }
 
   async selectFirstSlot() {

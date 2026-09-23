@@ -7,6 +7,7 @@ export class SlotsPage {
   readonly slotTime: Locator;
   readonly btnAddSlot: Locator;
   readonly freeSlots: Locator;
+  readonly blockedBooking: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -14,6 +15,7 @@ export class SlotsPage {
     this.slotTime = page.locator('#pomidorqa-slots-time');
     this.btnAddSlot = page.getByRole('button', { name: 'Добавить' });
     this.freeSlots = page.locator('div[data-slot-status="free"]');
+    this.blockedBooking = page.getByRole('alert');
   }
 
   async open() {
