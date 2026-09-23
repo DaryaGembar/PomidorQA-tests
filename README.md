@@ -83,5 +83,7 @@ tests/api/          — бизнес-правила бронирования ч�
 tests/e2e/          — сквозные пользовательские сценарии
 tests/pages/        — Page Objects: локаторы и действия над страницами
 tests/helpers/      — тестовые данные, роуты, API-хелперы регистрации/удаления
-.github/workflows/  — CI-пайплайн
+scripts/            — AI-reviewer: проверка PR через Polza.ai
+docs/               — матрица покрытия, правила TEST-CODEX, чеклист REVIEW
+.github/workflows/  — CI-пайплайн и AI-reviewer
 ```

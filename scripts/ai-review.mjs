@@ -25,8 +25,8 @@ function requiredEnv(name) {
 }
 
 function readProjectFile(path) {
-  // Скрипт живёт в docs/scripts/ — TEST-CODEX.md и REVIEW.md лежат в корне репо
-  return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+  // Скрипт живёт в scripts/, правила и чеклист — в docs/
+  return readFileSync(new URL(`../docs/${path}`, import.meta.url), 'utf8');
 }
 
 function truncate(value, maxLength) {

@@ -38,7 +38,7 @@ jobs:
           node-version: 24
 
       - name: Review Pull Request diff
-        run: node docs/scripts/ai-review.mjs
+        run: node scripts/ai-review.mjs
         env:
           AI_REVIEW_ALLOW_PUBLISH: true
           AI_REVIEW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
