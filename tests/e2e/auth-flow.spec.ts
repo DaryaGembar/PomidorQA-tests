@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type BrowserContext } from '@playwright/test';
 import {
   deleteAccountViaApi,
   loginUser,
@@ -12,32 +12,31 @@ import { SiteHeader } from '../pages/header';
 test.describe('Вход и выход', () => {
   let user: TestUser;
   let header: SiteHeader;
+  let cleanupContext: BrowserContext;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ browser, page }) => {
     user = makeUser('auth');
-    await registerViaApi(page.context(), user);
+    cleanupContext = await browser.newContext();
+    await registerViaApi(cleanupContext, user);
     header = new SiteHeader(page);
   });
 
-  test.afterEach(async ({ page }) => {
-    await deleteAccountViaApi(page.context()).catch(() => undefined);
+  test.afterEach(async () => {
+    await deleteAccountViaApi(cleanupContext).catch(() => undefined);
+    await cleanupContext.close();
   });
 
   test('Успешный вход держит сессию после перезагрузки', async ({ page }) => {
     await test.step('Входим через форму', async () => {
       await page.goto(ROUTES.login);
       await loginUser(page, user.email, user.password);
-    });
-
-    await test.step('Проверка: после перезагрузки сессия сохраняется', async () => {
-      await page.reload();
-      await expect(header.linkProfile).toBeVisible();
-      await expect(header.btnLogout).toBeVisible();
+      await header.expectLoggedIn();
     });
 
     await test.step('Проверка: после перезагрузки сессия сохраняется', async () => {
       await page.reload();
       await header.expectLoggedIn();
+      await expect(page).not.toHaveURL(/auth\/login/);
     });
   });
 
@@ -56,12 +55,6 @@ test.describe('Вход и выход', () => {
     await test.step('Проверка: приватная страница больше недоступна', async () => {
       await page.goto(ROUTES.profile);
       await expect(page).toHaveURL(/auth\/login/);
-    });
-
-    await test.step('Возвращаем сессию для уборки', async () => {
-      await page.goto(ROUTES.login);
-      await loginUser(page, user.email, user.password);
-      await header.expectLoggedIn();
     });
   });
 });
