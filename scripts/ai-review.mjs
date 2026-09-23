@@ -12,7 +12,7 @@ import {
   toGitHubComments,
 } from './ai-review-lib.mjs';
 
-const DEFAULT_MODEL = 'anthropic/claude-sonnet-5';
+const DEFAULT_MODEL = 'anthropic/claude-opus-5';
 const DEFAULT_POLZA_BASE_URL = 'https://polza.ai/api/v1';
 const MAX_DIFF_CHARS = 50_000;
 const MAX_FILE_PAGES = 10;

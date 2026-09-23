@@ -45,4 +45,4 @@ jobs:
           AI_REVIEW_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
           GITHUB_TOKEN: ${{ github.token }}
           POLZA_AI_API_KEY: ${{ secrets.POLZA_AI_API_KEY }}
-          POLZA_AI_MODEL: anthropic/claude-sonnet-5
+          POLZA_AI_MODEL: anthropic/claude-opus-5
