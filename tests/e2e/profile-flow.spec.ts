@@ -163,6 +163,27 @@ test.describe('Заполнение профиля после регистрац
     });
   });
 
+  test('Пустой навык не добавляется', async ({ page }) => {
+    await test.step('Кликаем «Добавить» с пустым полем', async () => {
+      await profilePage.btnAddSkill.click();
+    });
+
+    await test.step('Проверка: поле помечено как незаполненное', async () => {
+      await expect(profilePage.inputSkill).toHaveJSProperty('validity.valueMissing', true);
+    });
+
+    await test.step('Проверка: ни один блок навыков не появился', async () => {
+      await expect(profilePage.canHelpSkills).toHaveCount(0);
+      await expect(profilePage.wantToLearnSkills).toHaveCount(0);
+    });
+
+    await test.step('Проверка после перезагрузки — по-прежнему пусто', async () => {
+      await page.reload();
+      await expect(profilePage.canHelpSkills).toHaveCount(0);
+      await expect(profilePage.wantToLearnSkills).toHaveCount(0);
+    });
+  });
+
   test('Удаление навыков «могу помочь», "хочу разобрать"', async ({ page }) => {
     const skillTag = makeUnique('RemoveSkill');
 
