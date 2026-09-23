@@ -7,6 +7,7 @@ export class BookingPage {
   readonly calendarTime: Locator;
   readonly confirmModalDialog: Locator;
   readonly modalDialogConfirm: Locator;
+  readonly modalDialogCancel: Locator;
   readonly bookingRequiresAuth: Locator;
   readonly modalSuccess: Locator;
   readonly modalError: Locator;
@@ -21,6 +22,7 @@ export class BookingPage {
     this.calendarTime = page.getByRole('group', { name: 'Время слотов' }).getByRole('button');
     this.confirmModalDialog = page.getByRole('dialog');
     this.modalDialogConfirm = page.getByRole('button', { name: 'Подтвердить' });
+    this.modalDialogCancel = this.confirmModalDialog.getByRole('button', { name: 'Отмена' });
     this.bookingRequiresAuth = this.confirmModalDialog.getByRole('alert');
     this.modalSuccess = page.getByText('Забронировано');
     this.modalError = page.getByText('Этот слот только что забронировали');
@@ -57,6 +59,11 @@ export class BookingPage {
     await expect(this.bookingRequiresAuth).toContainText('Нужно войти в аккаунт PomidorQA', {
       timeout: 10_000,
     });
+  }
+
+  async cancelConfirmDialog() {
+    await this.modalDialogCancel.click();
+    await expect(this.confirmModalDialog).toBeHidden({ timeout: 5_000 });
   }
 
   async selectFirstSlot() {
