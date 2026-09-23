@@ -73,6 +73,13 @@ export class BookingPage {
       await expect(this.confirmModalDialog).toBeVisible();
     }).toPass({ timeout: 15_000 });
   }
+
+  async openConfirmDialogForFirstSlot() {
+    await expect(async () => {
+      await this.calendarTime.first().click();
+      await expect(this.confirmModalDialog).toBeVisible();
+    }).toPass({ timeout: 15_000 });
+  }
   async openBookings() {
     await this.page.goto(ROUTES.bookings);
   }

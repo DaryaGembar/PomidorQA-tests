@@ -1,6 +1,6 @@
 # AI-reviewer домашних Pull Request
 
-После успешного `Playwright CI` reviewer читает изменения текущей домашней работы, `CODEX.md` и `REVIEW.md`, отправляет их Claude Sonnet 5 через Polza.ai и публикует один GitHub review:
+После успешного `Playwright CI` reviewer читает изменения текущей домашней работы, `TEST-CODEX.md` и `REVIEW.md`, отправляет их Claude Opus 5 через Polza.ai и публикует один GitHub review:
 
 - общий вывод и учебный вердикт;
 - до пяти замечаний на конкретных добавленных строках;
