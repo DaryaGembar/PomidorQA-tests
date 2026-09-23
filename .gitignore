@@ -10,3 +10,5 @@ results.xml
 .DS_Store
 .playwright-mcp/
 .claude/
+codex.md
+.mcp.json
