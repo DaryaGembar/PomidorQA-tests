@@ -190,4 +190,68 @@ test.describe('Мои встречи: отмена брони', () => {
       }).toPass({ timeout: 15_000 });
     });
   });
+
+  test('Хост отменяет встречу — слот снова свободен и бронируется', async () => {
+    let guestResult: 'success' | 'taken';
+    let cancelResult: 'cancelled' | 'not-found';
+
+    await test.step('Гость: находит хоста и бронирует слот', async () => {
+      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.getPersonCard(host.name).click();
+      await guestBooking.waitForFreeSlot();
+      await guestBooking.selectFirstSlot();
+      guestResult = await guestBooking.confirmBooking();
+    });
+
+    await test.step('Проверка: бронь подтверждена', async () => {
+      expect(guestResult).toBe('success');
+    });
+
+    await test.step('Хост: видит бронирование в «Мои встречи»', async () => {
+      await expect(async () => {
+        await hostBooking.openBookings();
+        await expect(hostBooking.upcomingSession).toContainText(guest.name);
+      }).toPass({ timeout: 15_000 });
+    });
+
+    await test.step('Хост: отменяет встречу с гостем', async () => {
+      cancelResult = await hostBooking.cancelBookingWith(guest.name);
+    });
+
+    await test.step('Проверка: отмена хостом прошла — R11.1', async () => {
+      expect(cancelResult).toBe('cancelled');
+    });
+
+    await test.step('Гость: открывает «Мои встречи»', async () => {
+      await guestBooking.openBookings();
+    });
+
+    await test.step('После перезагрузки у гостя встреча в «Прошедшие и отменённые»', async () => {
+      await expect(async () => {
+        await guestBooking.openBookings();
+        await expect(guestBooking.upcomingBookingWith(host.name)).toHaveCount(0);
+        await expect(guestBooking.pastBookingWith(host.name)).toContainText('отменено');
+      }).toPass({ timeout: 15_000 });
+    });
+
+    await test.step('Хост: слот снова свободен в «Мои слоты» — R11.3', async () => {
+      await expect(async () => {
+        await hostSlots.open();
+        await expect(hostSlots.slotRow('free')).toContainText('12:00');
+      }).toPass({ timeout: 15_000 });
+    });
+
+    await test.step('Гость: бронирует освобождённый слот повторно', async () => {
+      await guestCatalog.goto();
+      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.getPersonCard(host.name).click();
+      await guestBooking.waitForFreeSlot();
+      await guestBooking.selectFirstSlot();
+      guestResult = await guestBooking.confirmBooking();
+    });
+
+    await test.step('Проверка: слот достался гостю повторно', async () => {
+      expect(guestResult).toBe('success');
+    });
+  });
 });
