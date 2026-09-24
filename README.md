@@ -1,10 +1,25 @@
 # PomidorQA Tests — автотесты сервиса PomidorQA
 
+[![Playwright CI](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml/badge.svg)](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml)
+![coverage](https://img.shields.io/badge/coverage-78%25-brightgreen)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=nodedotjs&logoColor=white)
+
 Автотесты веб-сервиса коротких встреч [PomidorQA](https://aiqa.su/pomidorqa) (Playwright + TypeScript).
 Продукт доступен только как живой сайт — код приложения закрыт, поэтому проверка идёт через
 пользовательский интерфейс и внешние контракты, как в реальной работе с чужим продуктом.
 
-Трассировка требований к тестам — [docs/coverage-matrix.md](docs/coverage-matrix.md).
+## Покрытие требований — 78%
+
+| Статус | Требований |
+|---|---|
+| `automated` | 39 |
+| `partial` | 7 |
+| `known defect` | 1 — поиск каталога идёт по обоим типам навыков ([KD-1](docs/coverage-matrix.md#известные-дефекты)) |
+| `out of scope` | 2 — обоснования в матрице |
+
+Полная трассировка 50 требований → тесты: [docs/coverage-matrix.md](docs/coverage-matrix.md)
 
 ## Что покрыто
 
