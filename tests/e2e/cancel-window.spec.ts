@@ -43,9 +43,22 @@ test.describe('Отмена: окно 2 часа до начала', () => {
     await hostSlots.open();
 
     const slotDate = new Date(Date.now() + 90 * 60 * 1000);
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Moscow',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
+        .formatToParts(slotDate)
+        .map((p) => [p.type, p.value]),
+    );
     await hostSlots.addSlot(
-      slotDate.toISOString().slice(0, 10),
-      `${String(slotDate.getHours()).padStart(2, '0')}:${String(slotDate.getMinutes()).padStart(2, '0')}`,
+      `${parts.year}-${parts.month}-${parts.day}`,
+      `${parts.hour}:${parts.minute}`,
     );
     await expect(hostSlots.freeSlots).toBeVisible();
 
