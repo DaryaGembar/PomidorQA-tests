@@ -9,6 +9,7 @@ export class BookingPage {
   readonly modalDialogConfirm: Locator;
   readonly modalDialogCancel: Locator;
   readonly bookingRequiresAuth: Locator;
+  readonly cancelRefusalAlert: Locator;
   readonly modalSuccess: Locator;
   readonly modalError: Locator;
   readonly upcomingSession: Locator;
@@ -24,6 +25,8 @@ export class BookingPage {
     this.modalDialogConfirm = page.getByRole('button', { name: 'Подтвердить' });
     this.modalDialogCancel = this.confirmModalDialog.getByRole('button', { name: 'Отмена' });
     this.bookingRequiresAuth = this.confirmModalDialog.getByRole('alert');
+
+    this.cancelRefusalAlert = page.getByRole('alert').filter({ hasText: 'не позже чем за 2 часа' });
     this.modalSuccess = page.getByText('Забронировано');
     this.modalError = page.getByText('Этот слот только что забронировали');
     this.upcomingSession = page.getByTestId('upcoming-meetings');
@@ -103,5 +106,9 @@ export class BookingPage {
       timeout: 15_000,
     });
     return 'cancelled';
+  }
+
+  cancelButtonFor(participantName: string): Locator {
+    return this.upcomingBookingWith(participantName).getByRole('button', { name: 'Отменить' });
   }
 }
