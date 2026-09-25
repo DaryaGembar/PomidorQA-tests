@@ -54,22 +54,45 @@ export async function loginUser(page: Page, email: string, password: string) {
   await page.getByRole('button', { name: 'Войти' }).click();
 }
 
+// Стенд иногда отвечает 502 через nginx (кратковременная потеря upstream) —
+// ретраим 5xx и 429: повтор инфраструктурного сбоя исправляет ситуацию.
+// Оставшиеся 4xx не ретраим: конфликт или ошибка данных повтором не лечится.
+async function withRetries<T>(
+  expectedStatuses: number[],
+  operation: () => Promise<{ status: number; payload: T }>,
+): Promise<T> {
+  let lastStatus = 0;
+
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const response = await operation();
+    lastStatus = response.status;
+    if (expectedStatuses.includes(response.status)) {
+      return response.payload;
+    }
+    if (response.status < 500 && response.status !== 429) {
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+  }
+
+  throw new Error(`API-запрос к стенду не удался: HTTP ${lastStatus}`);
+}
+
 export async function registerViaApi(
   context: BrowserContext,
   user: TestUser,
 ): Promise<{ id: string }> {
-  const response = await context.request.post(ROUTES.testAccounts, {
-    data: { name: user.name, email: user.email, password: user.password },
+  return withRetries([201], async () => {
+    const response = await context.request.post(ROUTES.testAccounts, {
+      data: { name: user.name, email: user.email, password: user.password },
+    });
+    return { status: response.status(), payload: (await response.json()) as { id: string } };
   });
-  if (response.status() !== 201) {
-    throw new Error(`API-регистрация не удалась: HTTP ${response.status()}`);
-  }
-  return (await response.json()) as { id: string };
 }
 
 export async function deleteAccountViaApi(context: BrowserContext) {
-  const response = await context.request.delete(ROUTES.testAccounts);
-  if (response.status() !== 200) {
-    throw new Error(`API-удаление аккаунта не удалось: HTTP ${response.status()}`);
-  }
+  await withRetries([200], async () => {
+    const response = await context.request.delete(ROUTES.testAccounts);
+    return { status: response.status(), payload: undefined };
+  });
 }
