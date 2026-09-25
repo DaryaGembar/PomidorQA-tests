@@ -73,22 +73,19 @@ else
   HEAD="🔴 Пайплайн красный"
 fi
 
-SEPARATOR='────────────────────────'
 
 TEXT="<b>${HEAD}</b>
 Репозиторий: <code>${REPO_ESC}</code> · ветка: <code>${BRANCH_ESC}</code>
 Запустил: ${COMMITTER_ESC}🦒
-${SEPARATOR}
 
 Unit ${UNIT_BADGE} · API ${API_BADGE} · E2E ${E2E_BADGE}
 
-Длительность:
-Lint $(duration "$LINT_START_TS") 
-Unit $(duration "$UNIT_START_TS")
-API $(duration "$API_START_TS") 
-E2E $(duration "$E2E_START_TS")
+···Lint $(duration "$LINT_START_TS") 
+···Unit $(duration "$UNIT_START_TS")
+···API $(duration "$API_START_TS") 
+···E2E $(duration "$E2E_START_TS")
 
-e2e: всего ${TOTAL}, ✅ ${PASSED}, ❌ ${FAILURES}, ⏭ ${SKIPPED}"
+e2e: всего ${TOTAL}, ✅ ${PASSED}, ❌ ${FAILURES}, ⏩ ${SKIPPED}"
 
 if [[ -n "$FAILED_NAMES" ]]; then
   TEXT="${TEXT}
