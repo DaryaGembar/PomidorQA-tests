@@ -5,8 +5,9 @@ export default defineConfig({
   fullyParallel: false,
   // В CI повторяем падение один раз, чтобы заметить флак; локально ошибка видна сразу.
   retries: process.env.CI ? 1 : 0,
-  // Один CI-worker снижает конкуренцию за пользователей, слоты и бронирования на общем стенде.
-  workers: process.env.CI ? 1 : undefined,
+  // Два CI-worker ускоряют пайплайн: тесты изолированы уникальными аккаунтами
+  // и не конкурируют за данные. Больше двух — лишняя нагрузка на общий стенд.
+  workers: process.env.CI ? 2 : undefined,
   // В CI пишем лог и HTML-artifact, но не пытаемся открыть браузерное окно на headless-runner.
   // `junit` нужен dorny/test-reporter для таблицы в PR-комментарии и GitHub Actions Summary.
   // `allure-playwright` собирает историю, severity и attachments — Allure-отчёт можно открывать локально и в CI.

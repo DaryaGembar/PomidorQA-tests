@@ -1,196 +1,207 @@
-# Имя workflow — так он отображается во вкладке Actions.
 name: Playwright CI
 
-# События, которые запускают проверки.
 on:
-  # Пайплайн стартует сам на каждый коммит, уходящий в main.
   push:
     branches: [main]
-  # Проверяем каждое изменение до слияния через Pull Request.
+
   pull_request:
-    # `main` здесь — целевая ветка PR, а не имя рабочей ветки.
     branches: [main]
-  # Оставляем кнопку ручного запуска во вкладке Actions.
+
   workflow_dispatch:
 
-# Все работы, которые выполнит workflow.
 jobs:
-  # Технический идентификатор единственной работы.
-  test:
-    # Читаемое имя работы в интерфейсе GitHub.
-    name: Lint and Playwright tests
-    # Останавливаем зависший прогон через 30 минут.
-    timeout-minutes: 30
-    # Запускаем проверки на чистой Linux-машине GitHub.
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
-    # Шаги выполняются сверху вниз в одной и той же машине.
+    timeout-minutes: 5
+    outputs:
+      start_ts: ${{ steps.run-start.outputs.ts }}
     steps:
-      # Метка старта — из неё Telegram-шаг считает длительность прогона.
-      # Ставим первым шагом, чтобы в замер попали checkout, установка и сами тесты.
       - name: Note run start time
         id: run-start
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      # Сначала загружаем в runner код из текущего PR.
       - name: Checkout repository
-        # Официальный action GitHub для клонирования репозитория.
         uses: actions/checkout@v6
 
-      # Готовим версию Node.js, на которой работает проект.
       - name: Setup Node.js
-        # Официальный action устанавливает Node.js и настраивает npm.
         uses: actions/setup-node@v6
-        # Параметры для action `setup-node`.
         with:
-          # Node.js 24 поддерживается текущими версиями ESLint и Playwright.
           node-version: 24
-          # Кэшируем скачанные npm-пакеты, но не готовый `node_modules`.
           cache: npm
 
-      # Устанавливаем JavaScript-зависимости проекта.
       - name: Install npm dependencies
-        # `npm ci` ставит точные версии из lock-файла и проверяет его согласованность с package.json.
         run: npm ci
 
-      # Playwright-пакет и браузерный бинарник устанавливаются отдельно.
-      - name: Install Chromium and system dependencies
-        # Для учебного CI достаточно Chromium; `--with-deps` добавляет нужные библиотеки Linux.
-        run: npx playwright install --with-deps chromium
-
-      # Сначала запускаем быструю статическую проверку кода.
       - name: Lint tests
-        # Используем тот же npm-скрипт, который разработчик запускает локально.
         run: npm run lint
 
-      # После линтера проверяем реальное поведение тестами.
-      - name: Run Playwright tests
-        # Скрипт `test` из package.json запускает unit, API и E2E-проекты Playwright.
-        run: npm test
-        # Переменные окружения только для этого шага.
+  unit:
+    name: Unit tests
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
         env:
-          # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
           CI: true
 
-      # Отправляем итог прогона в Telegram: и при успехе, и при падении тестов.
-      # Шаг стоит сразу после прогона, чтобы уведомление ушло даже при падении dorny или upload-artifact.
-      # Перед этим нужно добавить секреты TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID в Settings → Secrets → Actions.
-      - name: Notify Telegram
-        # `always()` — выполняем и при успехе, и при падении, и при ошибке любого предыдущего шага.
-        if: ${{ always() }}
+  api:
+    name: API tests
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run API tests
+        run: npm run test:api
         env:
-          # Токен бота и chat_id лежат в секретах workflow, чтобы не светиться в логах.
+          CI: true
+
+  e2e:
+    name: E2E tests
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Publish test report to PR
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: Playwright Report
+          path: results.xml
+          reporter: jest-junit
+          fail-on-error: false
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-xml
+          path: results.xml
+          retention-days: 1
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            allure-results/
+            test-results/
+          retention-days: 14
+
+  notify:
+    name: Notify Telegram
+    needs: [unit, api, e2e]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download e2e junit results
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: results-xml
+          path: .
+
+      - name: Send Telegram notification
+        env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # Метаданные GitHub для текста сообщения.
-          STATUS: ${{ job.status }}
+
+          UNIT_RESULT: ${{ needs.unit.result }}
+          API_RESULT: ${{ needs.api.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
           BRANCH: ${{ github.ref_name }}
           RUN_ID: ${{ github.run_id }}
           REPO: ${{ github.repository }}
           COMMITTER: ${{ github.actor }}
-          # URL для превью коммита в сообщении.
           COMMIT_SHA: ${{ github.sha }}
-          # Метка старта прогона из первого шага — для подсчёта длительности.
-          RUN_START_TS: ${{ steps.run-start.outputs.ts }}
+
+          RUN_START_TS: ${{ needs.lint.outputs.start_ts }}
         run: |
-          # Считаем totals из junit-XML, который сгенерировал репортер `junit` в playwright.config.ts.
-          # Если файла нет (например, упал npm test до старта тестов) — пишем нули, чтобы сообщение всё равно ушло.
+          # Totals из junit-XML куба E2E. Если файла нет — нули, сообщение уйдёт.
           if [ -f results.xml ]; then
             TOTAL=$(grep -oE 'tests="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
             FAILURES=$(grep -oE 'failures="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
             SKIPPED=$(grep -oE 'skipped="[0-9]+"' results.xml | head -1 | grep -oE '[0-9]+')
-            # Корневой `tests="..."` — все тесты; реально прошедшие = все минус упавшие и пропущенные.
             PASSED=$((TOTAL - FAILURES - SKIPPED))
-
-            # Разбивка по типам тестов: junit-репортер Playwright помечает каждый `<testsuite>`
-            # атрибутом `hostname="<имя проекта>"` из playwright.config.ts (unit / api / e2e).
-            count_tests() {
-              awk -v proj="$1" '
-                /<testsuite / {
-                  host = ""; tests = 0
-                  if (match($0, /hostname="[^"]+"/)) host = substr($0, RSTART + 10, RLENGTH - 11)
-                  if (match($0, / tests="[0-9]+"/)) tests = substr($0, RSTART + 8, RLENGTH - 9) + 0
-                  if (host == proj) total += tests
-                }
-                END { print total + 0 }
-              ' results.xml
-            }
-            UNIT_TESTS=$(count_tests unit)
-            API_TESTS=$(count_tests api)
-            E2E_TESTS=$(count_tests e2e)
           else
             TOTAL=0; FAILURES=0; SKIPPED=0; PASSED=0
-            UNIT_TESTS=0; API_TESTS=0; E2E_TESTS=0
           fi
 
-          # Длительность прогона — от метки первого шага до отправки уведомления.
           RUN_START_TS=${RUN_START_TS:-$(date +%s)}
           ELAPSED=$(( $(date +%s) - RUN_START_TS ))
           if (( ELAPSED < 0 )); then ELAPSED=0; fi
           DURATION_FMT="$((ELAPSED / 60)) мин $((ELAPSED % 60)) с"
 
-          # Эмодзи и заголовок зависят от job.status — GitHub уже знает итог прогона.
-          if [ "$STATUS" = "success" ]; then
-            EMOJI="✅"; HEAD="Тесты прошли"
+          # Пайплайн зелёный, только если зелёные все три тестовых куба.
+          if [ "$UNIT_RESULT" = "success" ] && [ "$API_RESULT" = "success" ] && [ "$E2E_RESULT" = "success" ]; then
+            EMOJI="✅"; HEAD="Пайплайн зелёный"
           else
-            EMOJI="❌"; HEAD="Тесты упали"
+            EMOJI="❌"; HEAD="Пайплайн красный"
           fi
 
-          # Ссылка на коммит и сам прогон.
           COMMIT_URL="https://github.com/${REPO}/commit/${COMMIT_SHA}"
           RUN_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
-          # Собираем сообщение. Используем обычный Markdown — он прощает спецсимволы без экранирования.
           TEXT="${EMOJI} *${HEAD}*
           📦 Репозиторий: ${REPO}
           🌿 Ветка: ${BRANCH}
           👤 Запустил: ${COMMITTER}
+          🧪 Unit: ${UNIT_RESULT} | API: ${API_RESULT} | E2E: ${E2E_RESULT}
+          📊 E2E: Всего ${TOTAL} | ✅ ${PASSED} | ❌ ${FAILURES} | ⏭ ${SKIPPED}
           ⏱ Время прогона: ${DURATION_FMT}
-          📊 Всего: ${TOTAL} | ✅ ${PASSED} | ❌ ${FAILURES} | ⏭ ${SKIPPED}
-          🧪 Unit: ${UNIT_TESTS} | API: ${API_TESTS} | E2E: ${E2E_TESTS}
           🔗 [Прогон в GitHub](${RUN_URL})
           💬 [Коммит](${COMMIT_URL})"
 
-          # Отправляем. --fail нужен, чтобы CI заметил проблему с самим запросом к Telegram.
           curl --fail -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d chat_id="${TELEGRAM_CHAT_ID}" \
             -d parse_mode="Markdown" \
             -d text="${TEXT}"
-
-      # Публикуем таблицу результатов в PR-комментарий и Summary.
-      # Использует `results.xml`, который сгенерировал junit-репортер из playwright.config.ts.
-      - name: Publish test report to PR
-        # Шаг нужен и при падении, и при отмене — пропускаем только отменённый run целиком.
-        if: ${{ !cancelled() }}
-        # v3 собран под Node 24: снимает предупреждение «Node.js 20 is deprecated».
-        uses: dorny/test-reporter@v3
-        with:
-          # Заголовок таблицы в комментарии PR.
-          name: Playwright Report
-          # Путь к junit-XML из playwright.config.ts.
-          path: results.xml
-          # Playwright пишет junit в формате, совместимом с jest-junit.
-          reporter: jest-junit
-          # Не валим шаг из-за красных тестов: job уже упал выше, дублировать не нужно.
-          fail-on-error: false
-
-      # Сохраняем HTML-отчёт после завершения тестов.
-      - name: Upload Playwright report
-        # Загружаем отчёт и после успеха, и после падения; пропускаем только отменённый run.
-        if: ${{ !cancelled() }}
-        # Официальный action GitHub превращает каталог в artifact текущего run.
-        uses: actions/upload-artifact@v7
-        # Параметры сохраняемого artifact.
-        with:
-          # Уникальный run_id не даёт отчётам разных запусков конфликтовать по имени.
-          name: playwright-report-${{ github.run_id }}
-          # Складываем HTML-отчёт, junit-XML, сырые данные для Allure и артефакты
-          # упавших e2e-тестов (trace, скриншоты) из `test-results/`.
-          # Без этой строки трейсы падений живут только на раннере и умирают с ним.
-          path: |
-            playwright-report/
-            allure-results/
-            results.xml
-            test-results/
-          # Двух недель достаточно для разбора PR, старые учебные отчёты не храним бессрочно.
-          retention-days: 14
