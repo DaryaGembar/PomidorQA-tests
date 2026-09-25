@@ -13,9 +13,9 @@ escape_html() {
 
 badge() {
   case "$1" in
-    success) printf '✓' ;;
-    failure) printf '✗' ;;
-    *)       printf '–' ;;
+    success) printf '✅' ;;
+    failure) printf '❌' ;;
+    *)       printf '⏭' ;;
   esac
 }
 
@@ -87,9 +87,8 @@ Lint $(duration "$LINT_START_TS")
 Unit $(duration "$UNIT_START_TS")
 API $(duration "$API_START_TS") 
 E2E $(duration "$E2E_START_TS")
-${SEPARATOR}
 
-e2e: всего ${TOTAL}, ✓ ${PASSED}, ✗ ${FAILURES}, пропуск ${SKIPPED}"
+e2e: всего ${TOTAL}, ✅ ${PASSED}, ❌ ${FAILURES}, ⏭ ${SKIPPED}"
 
 if [[ -n "$FAILED_NAMES" ]]; then
   TEXT="${TEXT}
