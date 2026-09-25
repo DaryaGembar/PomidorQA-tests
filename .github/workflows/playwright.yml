@@ -65,6 +65,15 @@ jobs:
         env:
           CI: true
 
+      - name: Upload Allure results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-unit
+          path: allure-results/
+          retention-days: 1
+          if-no-files-found: ignore
+
   api:
     name: API tests
     needs: lint
@@ -93,6 +102,15 @@ jobs:
         run: npm run test:api
         env:
           CI: true
+
+      - name: Upload Allure results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-api
+          path: allure-results/
+          retention-days: 1
+          if-no-files-found: ignore
 
   e2e:
     name: E2E tests
@@ -125,6 +143,15 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+
+      - name: Upload Allure results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-e2e
+          path: allure-results/
+          retention-days: 1
+          if-no-files-found: ignore
 
       - name: Publish test report to PR
         if: ${{ !cancelled() }}
@@ -207,3 +234,55 @@ jobs:
           API_START_TS: ${{ needs.api.outputs.start_ts }}
           E2E_START_TS: ${{ needs.e2e.outputs.start_ts }}
         run: bash scripts/notify-telegram.sh --send
+
+  allure-report:
+    name: Allure report
+    needs: [unit, api, e2e]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download Allure results
+        uses: actions/download-artifact@v7
+        with:
+          name: allure-unit
+          path: allure-results
+          merge-multiple: true
+
+      - name: Download Allure results (api)
+        uses: actions/download-artifact@v7
+        with:
+          name: allure-api
+          path: allure-results
+          merge-multiple: true
+
+      - name: Download Allure results (e2e)
+        uses: actions/download-artifact@v7
+        with:
+          name: allure-e2e
+          path: allure-results
+          merge-multiple: true
+
+      - name: Restore Allure history
+        uses: actions/checkout@v6
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy Allure history
+        run: |
+          mkdir -p allure-results/history
+          if [ -d gh-pages/allure-report/history ]; then
+            cp -r gh-pages/allure-report/history/. allure-results/history/
+          fi
+
+      - name: Generate Allure report
+        run: npx allure-commandline@2 generate allure-results --clean -o allure-report
+
+      - name: Publish Allure report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-report
