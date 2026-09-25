@@ -19,13 +19,11 @@ badge() {
   esac
 }
 
-duration() {
-  local start="${1:-}" now end d
-  now=$(date +%s)
-  if [[ ! "$start" =~ ^[0-9]+$ ]]; then start=$now; fi
-  d=$(( now - start ))
-  if (( d < 0 )); then d=0; fi
-  printf '%dм %02dс' $(( d / 60 )) $(( d % 60 ))
+fmt_duration() {
+  # Секунды → «Xм YYс» (значение приходит из куба, а не считается здесь)
+  local sec="${1:-0}"
+  if [[ ! "$sec" =~ ^[0-9]+$ ]]; then sec=0; fi
+  printf '%dм %02dс' $(( sec / 60 )) $(( sec % 60 ))
 }
 
 TOTAL=0; FAILURES=0; SKIPPED=0; PASSED=0
@@ -66,6 +64,9 @@ BRANCH_ESC=$(escape_html "$BRANCH")
 REPO_ESC=$(escape_html "$REPO")
 COMMITTER_ESC=$(escape_html "$COMMITTER")
 
+# Общее время пайплайна: от старта куба Lint до отправки уведомления
+WALL_SEC=$(( $(date +%s) - ${LINT_START_TS:-$(date +%s)} ))
+
 SILENT=false
 if [[ "$UNIT_RESULT" == "success" && "$API_RESULT" == "success" && "$E2E_RESULT" == "success" ]]; then
   HEAD="🟢 Пайплайн зелёный"; SILENT=true
@@ -80,12 +81,13 @@ TEXT="<b>${HEAD}</b>
 
 Unit ${UNIT_BADGE} · API ${API_BADGE} · E2E ${E2E_BADGE}
 
-···Lint $(duration "$LINT_START_TS") 
-···Unit $(duration "$UNIT_START_TS")
-···API $(duration "$API_START_TS") 
-···E2E $(duration "$E2E_START_TS")
+···Lint $(fmt_duration "$LINT_DUR")
+···Unit $(fmt_duration "$UNIT_DUR")
+···API $(fmt_duration "$API_DUR")
+···E2E $(fmt_duration "$E2E_DUR")
 
-e2e: всего ${TOTAL}, ✅ ${PASSED}, ❌ ${FAILURES}, ⏩ ${SKIPPED}"
+весь пайплайн: $(fmt_duration "$WALL_SEC")
+e2e: всего ${TOTAL}, ✅ ${PASSED}, ❌ ${FAILURES}, ⏭ ${SKIPPED}"
 
 if [[ -n "$FAILED_NAMES" ]]; then
   TEXT="${TEXT}

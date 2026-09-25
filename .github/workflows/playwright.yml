@@ -16,6 +16,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       start_ts: ${{ steps.run-start.outputs.ts }}
+      duration: ${{ steps.duration.outputs.dur }}
     steps:
       - name: Note run start time
         id: run-start
@@ -36,6 +37,11 @@ jobs:
       - name: Lint tests
         run: npm run lint
 
+      - name: Note duration
+        id: duration
+        if: ${{ always() }}
+        run: echo "dur=$(( $(date +%s) - ${{ steps.run-start.outputs.ts }} ))" >> "$GITHUB_OUTPUT"
+
   unit:
     name: Unit tests
     needs: lint
@@ -43,6 +49,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       start_ts: ${{ steps.run-start.outputs.ts }}
+      duration: ${{ steps.duration.outputs.dur }}
     steps:
       - name: Note run start time
         id: run-start
@@ -74,6 +81,11 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
+      - name: Note duration
+        id: duration
+        if: ${{ always() }}
+        run: echo "dur=$(( $(date +%s) - ${{ steps.run-start.outputs.ts }} ))" >> "$GITHUB_OUTPUT"
+
   api:
     name: API tests
     needs: lint
@@ -81,6 +93,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       start_ts: ${{ steps.run-start.outputs.ts }}
+      duration: ${{ steps.duration.outputs.dur }}
     steps:
       - name: Note run start time
         id: run-start
@@ -112,6 +125,11 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
+      - name: Note duration
+        id: duration
+        if: ${{ always() }}
+        run: echo "dur=$(( $(date +%s) - ${{ steps.run-start.outputs.ts }} ))" >> "$GITHUB_OUTPUT"
+
   e2e:
     name: E2E tests
     needs: lint
@@ -119,6 +137,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       start_ts: ${{ steps.run-start.outputs.ts }}
+      duration: ${{ steps.duration.outputs.dur }}
     steps:
       - name: Note run start time
         id: run-start
@@ -190,9 +209,14 @@ jobs:
             test-results/
           retention-days: 14
 
+      - name: Note duration
+        id: duration
+        if: ${{ always() }}
+        run: echo "dur=$(( $(date +%s) - ${{ steps.run-start.outputs.ts }} ))" >> "$GITHUB_OUTPUT"
+
   notify:
     name: Notify Telegram
-    needs: [unit, api, e2e]
+    needs: [lint, unit, api, e2e]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -230,9 +254,10 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
 
           LINT_START_TS: ${{ needs.lint.outputs.start_ts }}
-          UNIT_START_TS: ${{ needs.unit.outputs.start_ts }}
-          API_START_TS: ${{ needs.api.outputs.start_ts }}
-          E2E_START_TS: ${{ needs.e2e.outputs.start_ts }}
+          LINT_DUR: ${{ needs.lint.outputs.duration }}
+          UNIT_DUR: ${{ needs.unit.outputs.duration }}
+          API_DUR: ${{ needs.api.outputs.duration }}
+          E2E_DUR: ${{ needs.e2e.outputs.duration }}
         run: bash scripts/notify-telegram.sh --send
 
   allure-report:
@@ -241,6 +266,9 @@ jobs:
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Публикация отчёта пушит ветку gh-pages — токену нужен write на contents
+    permissions:
+      contents: write
     steps:
       - name: Download Allure results
         uses: actions/download-artifact@v7
