@@ -55,11 +55,16 @@ export class ProfilePage {
   }
 
   async addSkill(tag: string, type: 'can_help' | 'want_to_learn' = 'can_help') {
-    const addResponse = this.page.waitForResponse(this.appAction);
-    await this.inputSkill.fill(tag);
-    await this.selectSkillType.selectOption(type);
-    await this.btnAddSkill.click();
-    await addResponse;
+    await expect(async () => {
+      const addResponse = this.page.waitForResponse(this.appAction, { timeout: 5_000 });
+      await this.inputSkill.fill(tag);
+      await this.selectSkillType.selectOption(type);
+      await this.btnAddSkill.click();
+      const response = await addResponse;
+      if (response.status() >= 400) {
+        throw new Error(`Навык не добавлен: сервер ответил HTTP ${response.status()}`);
+      }
+    }).toPass({ timeout: 15_000 });
   }
 
   async removeSkill(tag: string, type: 'can_help' | 'want_to_learn' = 'can_help') {

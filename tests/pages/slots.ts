@@ -1,7 +1,10 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, type Response } from '@playwright/test';
 import { ROUTES } from '../helpers/user';
 
 export class SlotsPage {
+  private readonly appAction = (resp: Response) =>
+    resp.url().includes('/pomidorqa') && resp.request().method() !== 'GET';
+
   readonly page: Page;
   readonly slotDate: Locator;
   readonly slotTime: Locator;
@@ -23,9 +26,16 @@ export class SlotsPage {
   }
 
   async addSlot(date: string, time: string) {
-    await this.slotDate.fill(date);
-    await this.slotTime.fill(time);
-    await this.btnAddSlot.click();
+    await expect(async () => {
+      const addResponse = this.page.waitForResponse(this.appAction, { timeout: 5_000 });
+      await this.slotDate.fill(date);
+      await this.slotTime.fill(time);
+      await this.btnAddSlot.click();
+      const response = await addResponse;
+      if (response.status() >= 400) {
+        throw new Error(`Слот не добавлен: сервер ответил HTTP ${response.status()}`);
+      }
+    }).toPass({ timeout: 20_000 });
   }
 
   slotRow(status: 'free' | 'booked'): Locator {
@@ -35,10 +45,7 @@ export class SlotsPage {
   async deleteFirstFreeSlot() {
     const btn = this.freeSlots.first().getByRole('button', { name: 'Удалить' });
     await expect(async () => {
-      const removeResponse = this.page.waitForResponse(
-        (resp) => resp.url().includes('/pomidorqa') && resp.request().method() !== 'GET',
-        { timeout: 5_000 },
-      );
+      const removeResponse = this.page.waitForResponse(this.appAction, { timeout: 5_000 });
       await btn.click();
       await removeResponse;
     }).toPass({ timeout: 15_000 });
