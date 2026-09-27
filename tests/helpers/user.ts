@@ -28,6 +28,7 @@ export function makeUser(role: string): TestUser {
 export function makeUnique(prefix: string) {
   return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}`;
 }
+
 export async function registerUser(page: Page, user: TestUser) {
   await expect(async () => {
     await page.goto(ROUTES.register);

@@ -9,6 +9,7 @@
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tests/pages/`          | Page Objects (`booking.ts`, `profile.ts`, `slots.ts`, `catalog.ts`) — все локаторы и действия над страницей живут только здесь                |
 | `tests/helpers/user.ts` | Хелперы: `ROUTES`, `makeUser()`, `makeUnique()`, `registerViaApi()`, `registerUser()`, `loginUser()`, `deleteAccountViaApi()`, тип `TestUser` |
+| `tests/helpers/stand.ts` | Сцены пользователей: `createUserScene()` (контекст + регистрация через API + залогиненная страница), `createHostWithSlot()` (хост с навыком и слотом), `deleteScenes()` для afterEach, даты `standDate()` / `standDateTime()` в Europe/Moscow |
 | `tests/e2e/`            | E2E-спеки: браузерные сценарии, `baseURL` = `https://aiqa.su`                                                                                 |
 | `tests/api/`            | API-тесты: HTTP к локальному мок-серверу                                                                                                      |
 | `tests/unit/`           | Юнит-тесты чистых функций                                                                                                                     |

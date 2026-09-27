@@ -14,7 +14,7 @@ export class CatalogPage {
     this.catalogFilterInput = page.locator('#pomidorqa-catalog-skill-filter');
     this.btnSearch = page.getByRole('button', { name: 'Найти' });
     this.personCard = page.locator('[data-testid="person-card"]');
-    this.personName = page.locator('h1');
+    this.personName = page.getByRole('heading', { level: 1 });
     this.emptyResult = page.getByText('Пока никого не нашли по этому фильтру');
   }
 

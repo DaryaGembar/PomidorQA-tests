@@ -20,7 +20,7 @@ export class ProfilePage {
   constructor(page: Page) {
     this.page = page;
     this.inputName = page.getByLabel('Имя');
-    this.inputTelegram = page.locator('[placeholder="@username"]');
+    this.inputTelegram = page.getByPlaceholder('@username');
     this.inputAboutMe = page.getByLabel('О себе');
     this.timezoneSelect = page.getByLabel('Часовой пояс');
     this.inputSkill = page.locator('#pomidorqa-profile-skill-input');

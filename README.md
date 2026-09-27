@@ -48,6 +48,22 @@ JUnit · Allure · Telegram Bot API
 
 **Unit** — чистые функции: пересечение слотов по времени (включая граничные случаи «впритык» и вложенность), форматирование времени, валидация пароля.
 
+## QA-артефакты
+
+Автоматизация — это часть QA. Полный цикл тестирования продукта описан в:
+
+- **[Test Plan](docs/test-plan.md)** — цель, scope, стратегия, entry/exit criteria, риски, артефакты
+- **[Test Cases](docs/test-cases.md)** — примеры кейсов в стандартном формате: smoke, boundary, negative,
+  cross-cutting (a11y, адаптив), exploratory
+- **[Bug Reports](docs/bug-reports/)** — шаблон и формализованные дефекты:
+  - [KD-1](docs/bug-reports/KD-1.md) — каталог ищет по навыкам обоих типов (известный дефект продукта)
+  - [BR-001](docs/bug-reports/BR-001-hydration-race.md) — клик по кнопке до гидрации React (тихий no-op)
+  - [BR-002](docs/bug-reports/BR-002-past-slot-ui.md) — форма создания слота не блокирует дату в прошлом
+- **[CI walkthrough](docs/ci-walkthrough.md)** — построчный разбор GitHub Actions, AI-reviewer,
+  Allure и Telegram: что делает каждый шаг, зачем именно так, и какие вопросы задают на собесе
+
+Каждый баг-репорт привязан к требованию в [coverage-matrix](docs/coverage-matrix.md) и к конкретному тесту.
+
 ## Инженерные решения
 
 **Гонка за слот — двойное покрытие.** Требование «ровно одна бронь при одновременной попытке»
@@ -127,6 +143,7 @@ tests/e2e/          — сквозные пользовательские сце
 tests/pages/        — Page Objects: локаторы и действия над страницами
 tests/helpers/      — тестовые данные, роуты, API-хелперы регистрации/удаления
 scripts/            — AI-reviewer: проверка PR через Polza.ai
-docs/               — матрица покрытия, правила TEST-CODEX, чеклист REVIEW
+docs/               — test plan, test cases, матрица покрытия, правила TEST-CODEX, чеклист REVIEW
+docs/bug-reports/   — шаблон и формализованные bug reports
 .github/workflows/  — CI-пайплайн и AI-reviewer
 ```
