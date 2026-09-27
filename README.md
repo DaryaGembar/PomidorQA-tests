@@ -3,10 +3,17 @@
 [![Playwright CI](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml/badge.svg)](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml)
 ![coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![SQL] https://img.shields.io/badge/API-Postman-orange
+![SQL] https://img.shields.io/badge/SQL-MySQL-blue
 
 Автотесты веб-сервиса коротких встреч [PomidorQA](https://aiqa.su/pomidorqa) (Playwright + TypeScript).
 Продукт доступен только как живой сайт — код приложения закрыт, поэтому проверка идёт через
 пользовательский интерфейс и внешние контракты, как в реальной работе с чужим продуктом.
+
+## Стек
+
+Playwright · TypeScript · ESLint (typescript-eslint + eslint-plugin-playwright) · GitHub Actions ·
+JUnit · Allure · Telegram Bot API
 
 ## Покрытие требований — 84%
 
@@ -89,11 +96,6 @@
   (trace, скриншоты) — в артефактах прогона
 - После зелёного CI на PR **AI-reviewer** (Claude Opus 5 через Polza.ai) публикует
   ревью диффа: двухпроходная проверка против TEST-CODEX и чеклиста
-
-## Стек
-
-Playwright · TypeScript · ESLint (typescript-eslint + eslint-plugin-playwright) · GitHub Actions ·
-JUnit · Allure · Telegram Bot API
 
 ## Запуск
 
