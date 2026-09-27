@@ -3,8 +3,6 @@
 [![Playwright CI](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml/badge.svg)](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml)
 ![coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![SQL] https://img.shields.io/badge/API-Postman-orange
-![SQL] https://img.shields.io/badge/SQL-MySQL-blue
 
 Автотесты веб-сервиса коротких встреч [PomidorQA](https://aiqa.su/pomidorqa) (Playwright + TypeScript).
 Продукт доступен только как живой сайт — код приложения закрыт, поэтому проверка идёт через
