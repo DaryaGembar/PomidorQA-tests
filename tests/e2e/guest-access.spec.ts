@@ -1,60 +1,35 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-import {
-  deleteAccountViaApi,
-  makeUnique,
-  makeUser,
-  registerViaApi,
-  ROUTES,
-  type TestUser,
-} from '../helpers/user';
+import { makeUnique, ROUTES } from '../helpers/user';
+import { createHostWithSlot, deleteScenes, type HostScene } from '../helpers/stand';
 import { CatalogPage } from '../pages/catalog';
 import { BookingPage } from '../pages/booking';
-import { ProfilePage } from '../pages/profile';
-import { SlotsPage } from '../pages/slots';
 
 test.describe('Гость: возможности неавторизованного пользователя', () => {
-  let host: TestUser;
-  let skillTag: string;
-  let hostContext: BrowserContext;
+  let host: HostScene;
   let guestContext: BrowserContext;
-  let hostPage: Page;
   let guestPage: Page;
   let guestCatalog: CatalogPage;
   let guestBooking: BookingPage;
 
   test.beforeEach(async ({ browser }) => {
-    hostContext = await browser.newContext();
+    host = await createHostWithSlot(browser, { skillTag: makeUnique('GuestAccess') });
+
+    // Гость неавторизован — контекст без аккаунта.
     guestContext = await browser.newContext();
-    hostPage = await hostContext.newPage();
     guestPage = await guestContext.newPage();
-
-    host = makeUser('host');
-    skillTag = makeUnique('GuestAccess');
-
-    await registerViaApi(hostContext, host);
-
-    const hostProfile = new ProfilePage(hostPage);
-    const hostSlots = new SlotsPage(hostPage);
-    await hostProfile.open();
-    await hostProfile.addSkill(skillTag);
-    await expect(hostProfile.canHelpSkills).toContainText(skillTag);
-    await hostSlots.open();
-    await hostSlots.addSlot(new Date(Date.now() + 86_400_000).toISOString().slice(0, 10), '12:00');
-
     guestCatalog = new CatalogPage(guestPage);
     guestBooking = new BookingPage(guestPage);
 
     await expect(async () => {
       await guestCatalog.goto();
-      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.searchBy(host.skillTag);
       await expect(guestCatalog.getPersonCard(host.name)).toBeVisible();
     }).toPass({ timeout: 20_000 });
     await expect(guestCatalog.personCard).toHaveCount(1);
   });
 
   test.afterEach(async () => {
-    await deleteAccountViaApi(hostContext).catch(() => undefined);
-    await hostContext.close();
+    await deleteScenes(host);
     await guestContext.close();
   });
 

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { deleteAccountViaApi, makeUnique, makeUser, registerViaApi } from '../helpers/user';
+import { standDate } from '../helpers/stand';
 import { ProfilePage } from '../pages/profile';
 import { CatalogPage } from '../pages/catalog';
 import { BookingPage } from '../pages/booking';
@@ -47,9 +48,7 @@ test('основной путь + гонка за слот: регистраци
 
     await test.step('Хост: добавляет свободный слот на завтра', async () => {
       await hostSlots.open();
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const date = tomorrow.toISOString().slice(0, 10);
-      await hostSlots.addSlot(date, '12:00');
+      await hostSlots.addSlot(standDate(1), '12:00');
     });
 
     await test.step('Слот отображается в списке', async () => {

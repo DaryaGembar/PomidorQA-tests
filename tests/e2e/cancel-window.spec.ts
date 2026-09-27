@@ -1,76 +1,35 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { makeUnique } from '../helpers/user';
 import {
-  deleteAccountViaApi,
-  makeUnique,
-  makeUser,
-  registerViaApi,
-  type TestUser,
-} from '../helpers/user';
+  createHostWithSlot,
+  createUserScene,
+  deleteScenes,
+  type HostScene,
+  type UserScene,
+} from '../helpers/stand';
 import { CatalogPage } from '../pages/catalog';
 import { BookingPage } from '../pages/booking';
-import { ProfilePage } from '../pages/profile';
-import { SlotsPage } from '../pages/slots';
 
 test.describe('Отмена: окно 2 часа до начала', () => {
-  let host: TestUser;
-  let guest: TestUser;
-  let skillTag: string;
-  let hostContext: BrowserContext;
-  let guestContext: BrowserContext;
-  let hostPage: Page;
-  let guestPage: Page;
+  let host: HostScene;
+  let guest: UserScene;
   let guestCatalog: CatalogPage;
   let guestBooking: BookingPage;
 
   test.beforeEach(async ({ browser }) => {
-    hostContext = await browser.newContext();
-    guestContext = await browser.newContext();
-    hostPage = await hostContext.newPage();
-    guestPage = await guestContext.newPage();
+    // Слот через 90 минут — уже за границей окна «не позже чем за 2 часа до начала».
+    host = await createHostWithSlot(browser, {
+      skillTag: makeUnique('CancelWindow'),
+      minutesAhead: 90,
+    });
+    guest = await createUserScene(browser, 'guest');
 
-    host = makeUser('host');
-    guest = makeUser('guest');
-    skillTag = makeUnique('CancelWindow');
-
-    await registerViaApi(hostContext, host);
-    await registerViaApi(guestContext, guest);
-
-    const hostProfile = new ProfilePage(hostPage);
-    const hostSlots = new SlotsPage(hostPage);
-    await hostProfile.open();
-    await hostProfile.addSkill(skillTag);
-    await expect(hostProfile.canHelpSkills).toContainText(skillTag);
-    await hostSlots.open();
-
-    const slotDate = new Date(Date.now() + 90 * 60 * 1000);
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Moscow',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-        .formatToParts(slotDate)
-        .map((p) => [p.type, p.value]),
-    );
-    await hostSlots.addSlot(
-      `${parts.year}-${parts.month}-${parts.day}`,
-      `${parts.hour}:${parts.minute}`,
-    );
-    await expect(hostSlots.freeSlots).toBeVisible();
-
-    guestCatalog = new CatalogPage(guestPage);
-    guestBooking = new BookingPage(guestPage);
+    guestCatalog = new CatalogPage(guest.page);
+    guestBooking = new BookingPage(guest.page);
   });
 
   test.afterEach(async () => {
-    await deleteAccountViaApi(hostContext).catch(() => undefined);
-    await deleteAccountViaApi(guestContext).catch(() => undefined);
-    await hostContext.close();
-    await guestContext.close();
+    await deleteScenes(guest, host);
   });
 
   test('Отмена запрещена позже чем за 2 часа до начала', async () => {
@@ -78,7 +37,7 @@ test.describe('Отмена: окно 2 часа до начала', () => {
       await guestCatalog.goto();
 
       await expect(async () => {
-        await guestCatalog.searchBy(skillTag);
+        await guestCatalog.searchBy(host.skillTag);
         await expect(guestCatalog.getPersonCard(host.name)).toBeVisible();
       }).toPass({ timeout: 20_000 });
       await guestCatalog.getPersonCard(host.name).click();
@@ -100,7 +59,7 @@ test.describe('Отмена: окно 2 часа до начала', () => {
     });
 
     await test.step('Проверка: редирект с причиной отказа', async () => {
-      await expect(guestPage).toHaveURL(/cancelError=window/);
+      await expect(guest.page).toHaveURL(/cancelError=window/);
     });
 
     await test.step('Проверка: алерт — отмена доступна не позже чем за 2 часа', async () => {

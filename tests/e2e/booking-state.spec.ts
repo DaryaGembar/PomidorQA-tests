@@ -1,67 +1,38 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { makeUnique } from '../helpers/user';
 import {
-  deleteAccountViaApi,
-  makeUnique,
-  makeUser,
-  registerViaApi,
-  type TestUser,
-} from '../helpers/user';
+  createHostWithSlot,
+  createUserScene,
+  deleteScenes,
+  type HostScene,
+  type UserScene,
+} from '../helpers/stand';
 import { CatalogPage } from '../pages/catalog';
-import { ProfilePage } from '../pages/profile';
-import { SlotsPage } from '../pages/slots';
 import { BookingPage } from '../pages/booking';
 
 test.describe('Состояние бронирования: окно подтверждения и календарь участника', () => {
-  let host: TestUser;
-  let guest: TestUser;
-  let skillTag: string;
-  let hostContext: BrowserContext;
-  let guestContext: BrowserContext;
-  let hostPage: Page;
-  let guestPage: Page;
+  let host: HostScene;
+  let guest: UserScene;
   let guestCatalog: CatalogPage;
   let guestBooking: BookingPage;
 
   test.beforeEach(async ({ browser }) => {
-    hostContext = await browser.newContext();
-    guestContext = await browser.newContext();
-    hostPage = await hostContext.newPage();
-    guestPage = await guestContext.newPage();
+    host = await createHostWithSlot(browser, { skillTag: makeUnique('BookingState') });
+    guest = await createUserScene(browser, 'guest');
 
-    host = makeUser('host');
-    guest = makeUser('guest');
-    skillTag = makeUnique('BookingState');
-
-    await registerViaApi(hostContext, host);
-    await registerViaApi(guestContext, guest);
-
-    const hostProfile = new ProfilePage(hostPage);
-    const hostSlots = new SlotsPage(hostPage);
-    await hostProfile.open();
-    await hostProfile.addSkill(skillTag);
-    await expect(hostProfile.canHelpSkills).toContainText(skillTag);
-
-    await hostSlots.open();
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await hostSlots.addSlot(tomorrow.toISOString().slice(0, 10), '12:00');
-    await expect(hostSlots.freeSlots).toBeVisible();
-
-    guestCatalog = new CatalogPage(guestPage);
-    guestBooking = new BookingPage(guestPage);
+    guestCatalog = new CatalogPage(guest.page);
+    guestBooking = new BookingPage(guest.page);
 
     await expect(async () => {
       await guestCatalog.goto();
-      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.searchBy(host.skillTag);
       await expect(guestCatalog.getPersonCard(host.name)).toBeVisible();
     }).toPass({ timeout: 20_000 });
     await expect(guestCatalog.personCard).toHaveCount(1);
   });
 
   test.afterEach(async () => {
-    await deleteAccountViaApi(guestContext).catch(() => undefined);
-    await deleteAccountViaApi(hostContext).catch(() => undefined);
-    await guestContext.close();
-    await hostContext.close();
+    await deleteScenes(guest, host);
   });
 
   test('Закрытие окна подтверждения не создаёт бронь', async () => {
@@ -91,7 +62,7 @@ test.describe('Состояние бронирования: окно подтв�
     });
 
     await test.step('Гость перезагружает страницу участника', async () => {
-      await guestPage.reload();
+      await guest.page.reload();
     });
 
     await test.step('Слот всё ещё свободен', async () => {
@@ -135,12 +106,12 @@ test.describe('Состояние бронирования: окно подтв�
     });
 
     await test.step('Гость перезагружает страницу участника', async () => {
-      await guestPage.reload();
+      await guest.page.reload();
     });
 
     await test.step('Календарь участника опустел — свободных слотов нет', async () => {
       await expect(async () => {
-        await guestPage.reload();
+        await guest.page.reload();
         await expect(guestBooking.calendarDay).toHaveCount(0);
         await expect(guestBooking.calendarTime).toHaveCount(0);
       }).toPass({ timeout: 15_000 });

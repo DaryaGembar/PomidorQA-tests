@@ -1,27 +1,24 @@
 import { test, expect } from '@playwright/test';
-import { deleteAccountViaApi, makeUser, registerViaApi, type TestUser } from '../helpers/user';
+import { createUserScene, deleteScenes, standDate, type UserScene } from '../helpers/stand';
 import { SlotsPage } from '../pages/slots';
 
 test.describe('Мои слоты', () => {
-  let user: TestUser;
+  let user: UserScene;
   let slots: SlotsPage;
 
-  test.beforeEach(async ({ page }) => {
-    user = makeUser('slots');
-    await registerViaApi(page.context(), user);
-    slots = new SlotsPage(page);
+  test.beforeEach(async ({ browser }) => {
+    user = await createUserScene(browser, 'slots');
+    slots = new SlotsPage(user.page);
     await slots.open();
   });
 
-  test.afterEach(async ({ page }) => {
-    await deleteAccountViaApi(page.context()).catch(() => undefined);
+  test.afterEach(async () => {
+    await deleteScenes(user);
   });
 
-  test('Свободный слот можно удалить', async ({ page }) => {
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-
+  test('Свободный слот можно удалить', async () => {
     await test.step('Добавляем свободный слот на завтра 12:00', async () => {
-      await slots.addSlot(tomorrow, '12:00');
+      await slots.addSlot(standDate(1), '12:00');
       await expect(slots.freeSlots).toBeVisible();
     });
 
@@ -30,7 +27,7 @@ test.describe('Мои слоты', () => {
     });
 
     await test.step('После перезагрузки слота нет в списке', async () => {
-      await page.reload();
+      await slots.page.reload();
       await expect(slots.freeSlots).toHaveCount(0);
     });
   });

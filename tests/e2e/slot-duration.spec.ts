@@ -1,48 +1,40 @@
 import { test, expect } from '@playwright/test';
+import { makeUnique, ROUTES } from '../helpers/user';
 import {
-  deleteAccountViaApi,
-  makeUnique,
-  makeUser,
-  registerViaApi,
-  ROUTES,
-  type TestUser,
-} from '../helpers/user';
+  createUserScene,
+  deleteScenes,
+  standDate,
+  type UserScene,
+} from '../helpers/stand';
 import { CatalogPage } from '../pages/catalog';
 import { ProfilePage } from '../pages/profile';
 import { SlotsPage } from '../pages/slots';
 import { BookingPage } from '../pages/booking';
 
-const tomorrowDate = () => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-
 test.describe('Длительность слота — 25 минут (R7.1): границы наблюдаемости', () => {
-  let host: TestUser;
-  let hostId: string;
+  let host: UserScene;
   let slots: SlotsPage;
   let booking: BookingPage;
   let personUrl: string;
 
-  test.beforeEach(async ({ page }) => {
-    host = makeUser('host');
-    const registered = await registerViaApi(page.context(), host);
-    hostId = registered.id;
-    slots = new SlotsPage(page);
-    booking = new BookingPage(page);
-    personUrl = `${ROUTES.catalog}/people/${hostId}`;
+  test.beforeEach(async ({ browser }) => {
+    host = await createUserScene(browser, 'host');
+    slots = new SlotsPage(host.page);
+    booking = new BookingPage(host.page);
+    personUrl = `${ROUTES.catalog}/people/${host.id}`;
   });
 
-  test.afterEach(async ({ page }) => {
-    await deleteAccountViaApi(page.context()).catch(() => undefined);
+  test.afterEach(async () => {
+    await deleteScenes(host);
   });
 
   // Подпись «25 минут» в диалоге — строковый литерал в клиентском бандле стенда
   // (рядом с вычисляемым из start_time началом), а не вычисленная длительность.
   // Этот тест документирует интерфейс макета и не доказывает само правило R7.1.
-  test('Поверхности брони показывают только начало слота, «25 минут» в диалоге — статичный текст', async ({
-    page,
-  }) => {
+  test('Поверхности брони показывают только начало слота, «25 минут» в диалоге — статичный текст', async () => {
     await test.step('Хост добавляет свободный слот на завтра 12:00', async () => {
       await slots.open();
-      await slots.addSlot(tomorrowDate(), '12:00');
+      await slots.addSlot(standDate(1), '12:00');
       await expect(slots.freeSlots).toBeVisible();
     });
 
@@ -53,7 +45,7 @@ test.describe('Длительность слота — 25 минут (R7.1): г�
     });
 
     await test.step('Открываем свою карточку участника', async () => {
-      await page.goto(personUrl);
+      await host.page.goto(personUrl);
       await booking.waitForFreeSlot();
     });
 
@@ -74,12 +66,12 @@ test.describe('Длительность слота — 25 минут (R7.1): г�
   test('Слоты на 25-минутной сетке можно ставить впритык: 12:00 и 12:25', async () => {
     await test.step('Хост добавляет свободный слот на завтра 12:00', async () => {
       await slots.open();
-      await slots.addSlot(tomorrowDate(), '12:00');
+      await slots.addSlot(standDate(1), '12:00');
       await expect(slots.freeSlots).toBeVisible();
     });
 
     await test.step('Хост добавляет слот 12:25 впритык — стенд принимает', async () => {
-      await slots.addSlot(tomorrowDate(), '12:25');
+      await slots.addSlot(standDate(1), '12:25');
       await expect(slots.freeSlots).toHaveCount(2);
     });
 
@@ -93,28 +85,21 @@ test.describe('Длительность слота — 25 минут (R7.1): г�
 
   test('После брони «Мои встречи» у гостя и хоста показывают только начало встречи', async ({
     browser,
-    page,
   }) => {
-    const guest = makeUser('guest');
     const skillTag = makeUnique('Duration');
-    const guestContext = await browser.newContext();
-    const guestPage = await guestContext.newPage();
-    const guestCatalog = new CatalogPage(guestPage);
-    const guestBooking = new BookingPage(guestPage);
-    const hostProfile = new ProfilePage(page);
+    const guest = await createUserScene(browser, 'guest');
+    const guestCatalog = new CatalogPage(guest.page);
+    const guestBooking = new BookingPage(guest.page);
+    const hostProfile = new ProfilePage(host.page);
 
     try {
-      await test.step('Гость регистрируется отдельным аккаунтом (API)', async () => {
-        await registerViaApi(guestContext, guest);
-      });
-
       await test.step('Хост добавляет навык «Могу помочь» и свободный слот на завтра 12:00', async () => {
         await hostProfile.open();
         await hostProfile.addSkill(skillTag);
         await expect(hostProfile.canHelpSkills).toContainText(skillTag);
 
         await slots.open();
-        await slots.addSlot(tomorrowDate(), '12:00');
+        await slots.addSlot(standDate(1), '12:00');
         await expect(slots.freeSlots).toBeVisible();
       });
 
@@ -154,8 +139,7 @@ test.describe('Длительность слота — 25 минут (R7.1): г�
         await expect(booking.upcomingBookingWith(guest.name)).not.toContainText('12:25');
       });
     } finally {
-      await deleteAccountViaApi(guestContext).catch(() => undefined);
-      await guestContext.close();
+      await deleteScenes(guest);
     }
   });
 });

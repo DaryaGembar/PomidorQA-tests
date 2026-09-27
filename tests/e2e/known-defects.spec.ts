@@ -1,43 +1,20 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-import {
-  deleteAccountViaApi,
-  makeUnique,
-  makeUser,
-  registerViaApi,
-  type TestUser,
-} from '../helpers/user';
+import { test, expect } from '@playwright/test';
+import { makeUnique } from '../helpers/user';
+import { createHostWithSlot, deleteScenes, type HostScene } from '../helpers/stand';
 import { CatalogPage } from '../pages/catalog';
-import { ProfilePage } from '../pages/profile';
-import { SlotsPage } from '../pages/slots';
 
 test.describe('Известные дефекты продукта', () => {
-  let host: TestUser;
-  let skillTag: string;
-  let hostContext: BrowserContext;
-  let hostPage: Page;
-  let hostProfile: ProfilePage;
-  let hostSlots: SlotsPage;
+  let host: HostScene;
 
   test.beforeEach(async ({ browser }) => {
-    hostContext = await browser.newContext();
-    hostPage = await hostContext.newPage();
-    host = makeUser('host');
-    skillTag = makeUnique('KnownDefect');
-    await registerViaApi(hostContext, host);
-
-    hostProfile = new ProfilePage(hostPage);
-    hostSlots = new SlotsPage(hostPage);
-    await hostProfile.open();
-    await hostProfile.addSkill(skillTag, 'want_to_learn');
-    await expect(hostProfile.wantToLearnSkills).toContainText(skillTag);
-    await hostSlots.open();
-    await hostSlots.addSlot(new Date(Date.now() + 86_400_000).toISOString().slice(0, 10), '12:00');
-    await expect(hostSlots.freeSlots).toBeVisible();
+    host = await createHostWithSlot(browser, {
+      skillTag: makeUnique('KnownDefect'),
+      skillType: 'want_to_learn',
+    });
   });
 
   test.afterEach(async () => {
-    await deleteAccountViaApi(hostContext).catch(() => undefined);
-    await hostContext.close();
+    await deleteScenes(host);
   });
 
   test.fail();
@@ -47,7 +24,7 @@ test.describe('Известные дефекты продукта', () => {
     await test.step('Гость: ищет по тегу навыка «хочу разобрать»', async () => {
       await catalog.goto();
       await expect(async () => {
-        await catalog.searchBy(skillTag);
+        await catalog.searchBy(host.skillTag);
         await expect(catalog.emptyResult.or(catalog.getPersonCard(host.name))).toBeVisible();
       }).toPass({ timeout: 20_000 });
     });

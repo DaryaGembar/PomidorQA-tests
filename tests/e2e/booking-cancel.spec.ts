@@ -1,75 +1,43 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { makeUnique } from '../helpers/user';
 import {
-  deleteAccountViaApi,
-  makeUnique,
-  makeUser,
-  registerViaApi,
-  type TestUser,
-} from '../helpers/user';
+  createHostWithSlot,
+  createUserScene,
+  deleteScenes,
+  type HostScene,
+  type UserScene,
+} from '../helpers/stand';
 import { CatalogPage } from '../pages/catalog';
-import { ProfilePage } from '../pages/profile';
-import { SlotsPage } from '../pages/slots';
 import { BookingPage } from '../pages/booking';
 
 test.describe('Мои встречи: отмена брони', () => {
-  let host: TestUser;
-  let guest: TestUser;
-  let skillTag: string;
-  let hostContext: BrowserContext;
-  let guestContext: BrowserContext;
-  let hostPage: Page;
-  let guestPage: Page;
-  let hostProfile: ProfilePage;
-  let hostSlots: SlotsPage;
+  let host: HostScene;
+  let guest: UserScene;
   let hostBooking: BookingPage;
   let guestCatalog: CatalogPage;
   let guestBooking: BookingPage;
 
   test.beforeEach(async ({ browser }) => {
-    hostContext = await browser.newContext();
-    guestContext = await browser.newContext();
-    hostPage = await hostContext.newPage();
-    guestPage = await guestContext.newPage();
+    host = await createHostWithSlot(browser, { skillTag: makeUnique('Cancel') });
+    guest = await createUserScene(browser, 'guest');
 
-    host = makeUser('host');
-    guest = makeUser('guest');
-    skillTag = makeUnique('Cancel');
-
-    await registerViaApi(hostContext, host);
-    await registerViaApi(guestContext, guest);
-
-    hostProfile = new ProfilePage(hostPage);
-    hostSlots = new SlotsPage(hostPage);
-    hostBooking = new BookingPage(hostPage);
-    guestCatalog = new CatalogPage(guestPage);
-    guestBooking = new BookingPage(guestPage);
-
-    await hostProfile.open();
-    await hostProfile.addSkill(skillTag);
-    await expect(hostProfile.canHelpSkills).toContainText(skillTag);
-
-    await hostSlots.open();
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await hostSlots.addSlot(tomorrow.toISOString().slice(0, 10), '12:00');
-    await expect(hostSlots.freeSlots).toBeVisible();
+    hostBooking = new BookingPage(host.page);
+    guestCatalog = new CatalogPage(guest.page);
+    guestBooking = new BookingPage(guest.page);
 
     await guestCatalog.goto();
   });
 
   test.afterEach(async () => {
-    await deleteAccountViaApi(guestContext).catch(() => undefined);
-    await deleteAccountViaApi(hostContext).catch(() => undefined);
-    await guestContext.close();
-    await hostContext.close();
+    await deleteScenes(guest, host);
   });
 
-  test('Забронированный слот удалить нельзя', async ({ page }) => {
+  test('Забронированный слот удалить нельзя', async () => {
     let guestResult: 'success' | 'taken';
 
     await test.step('Гость: открывает каталог и ищет хоста по навыку (сценарий 9)', async () => {
       await guestCatalog.goto();
-      await guestCatalog.catalogFilterInput.fill(skillTag);
-      await guestCatalog.btnSearch.click();
+      await guestCatalog.searchBy(host.skillTag);
     });
 
     await test.step('Карточка хоста найдена в каталоге', async () => {
@@ -104,24 +72,24 @@ test.describe('Мои встречи: отмена брони', () => {
       }).toPass({ timeout: 15_000 });
     });
 
-    await test.step('Хост: заходит на страницу «Мои встречи»', async () => {
-      await hostSlots.open();
+    await test.step('Хост: заходит на страницу «Мои слоты»', async () => {
+      await host.slots.open();
     });
 
     await test.step('Слот отображается как забронированный', async () => {
       await expect(async () => {
-        await hostSlots.open();
-        await expect(hostSlots.slotRow('booked')).toContainText('забронирован');
+        await host.slots.open();
+        await expect(host.slots.slotRow('booked')).toContainText('забронирован');
       }).toPass({ timeout: 15_000 });
     });
 
     await test.step('У забронированного слота нет кнопки удаления', async () => {
-      await expect(hostSlots.slotRow('booked').getByRole('button')).toHaveCount(0);
+      await expect(host.slots.slotRow('booked').getByRole('button')).toHaveCount(0);
     });
 
     await test.step('После перезагрузки слот всё ещё забронирован', async () => {
-      await page.reload();
-      await expect(hostSlots.slotRow('booked')).toContainText('забронирован');
+      await host.page.reload();
+      await expect(host.slots.slotRow('booked')).toContainText('забронирован');
     });
   });
 
@@ -130,7 +98,7 @@ test.describe('Мои встречи: отмена брони', () => {
     let cancelResult: 'cancelled' | 'not-found';
 
     await test.step('Гость: ищет хоста в каталоге по навыку', async () => {
-      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.searchBy(host.skillTag);
     });
 
     await test.step('Карточка хоста найдена в каталоге', async () => {
@@ -174,7 +142,7 @@ test.describe('Мои встречи: отмена брони', () => {
     });
 
     await test.step('После перезагрузки у гостя встреча в «Прошедшие и отменённые»', async () => {
-      await guestPage.reload();
+      await guest.page.reload();
       await expect(guestBooking.upcomingBookingWith(host.name)).toHaveCount(0);
       await expect(guestBooking.cancelledSection).toBeVisible();
       await expect(guestBooking.pastBookingWith(host.name)).toContainText('отменено');
@@ -183,7 +151,7 @@ test.describe('Мои встречи: отмена брони', () => {
     await test.step('После перезагрузки у хоста встреча в «Прошедшие и отменённые»', async () => {
       await expect(async () => {
         await hostBooking.openBookings();
-        await hostPage.reload();
+        await host.page.reload();
         await expect(hostBooking.upcomingBookingWith(guest.name)).toHaveCount(0);
         await expect(hostBooking.cancelledSection).toBeVisible();
         await expect(hostBooking.pastBookingWith(guest.name)).toContainText('отменено');
@@ -196,7 +164,7 @@ test.describe('Мои встречи: отмена брони', () => {
     let cancelResult: 'cancelled' | 'not-found';
 
     await test.step('Гость: находит хоста и бронирует слот', async () => {
-      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.searchBy(host.skillTag);
       await guestCatalog.getPersonCard(host.name).click();
       await guestBooking.waitForFreeSlot();
       await guestBooking.selectFirstSlot();
@@ -236,14 +204,14 @@ test.describe('Мои встречи: отмена брони', () => {
 
     await test.step('Хост: слот снова свободен в «Мои слоты» — R11.3', async () => {
       await expect(async () => {
-        await hostSlots.open();
-        await expect(hostSlots.slotRow('free')).toContainText('12:00');
+        await host.slots.open();
+        await expect(host.slots.slotRow('free')).toContainText('12:00');
       }).toPass({ timeout: 15_000 });
     });
 
     await test.step('Гость: бронирует освобождённый слот повторно', async () => {
       await guestCatalog.goto();
-      await guestCatalog.searchBy(skillTag);
+      await guestCatalog.searchBy(host.skillTag);
       await guestCatalog.getPersonCard(host.name).click();
       await guestBooking.waitForFreeSlot();
       await guestBooking.selectFirstSlot();

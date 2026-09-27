@@ -6,8 +6,6 @@ import {
   type TimeRange,
 } from '../../src/pyramid/slots';
 
-//Юниты заппуск npx playwright test tests/unit/slots.spec.ts
-
 test.describe('Unit: пересечение слотов по времени', () => {
   test('пересекающиеся слоты — overlap === true', () => {
     const slotA: TimeRange = {
