@@ -3,7 +3,6 @@
 [![Playwright CI](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml/badge.svg)](https://github.com/DaryaGembar/PomidorQA-tests/actions/workflows/playwright.yml)
 ![coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white)
 ![Allure Report](https://img.shields.io/badge/Allure_Report-4A5568)
 ![Telegram](https://img.shields.io/badge/Telegram-26A5E4?logo=telegram&logoColor=white)
 
